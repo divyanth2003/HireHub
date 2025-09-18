@@ -1,0 +1,31 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.0.31903.59
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HireHub", "HireHub\HireHub.csproj", "{86F07E60-610F-4374-9F06-56E5876C684E}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HireHub.API.Tests", "HireHub.API.Tests\HireHub.API.Tests.csproj", "{6FC2B74A-0D34-4D59-92B9-D50A5B485DDC}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{86F07E60-610F-4374-9F06-56E5876C684E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{86F07E60-610F-4374-9F06-56E5876C684E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{86F07E60-610F-4374-9F06-56E5876C684E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{86F07E60-610F-4374-9F06-56E5876C684E}.Release|Any CPU.Build.0 = Release|Any CPU
+		{6FC2B74A-0D34-4D59-92B9-D50A5B485DDC}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{6FC2B74A-0D34-4D59-92B9-D50A5B485DDC}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{6FC2B74A-0D34-4D59-92B9-D50A5B485DDC}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{6FC2B74A-0D34-4D59-92B9-D50A5B485DDC}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {27B31CD6-F197-4711-BFC6-5407FA3E4763}
+	EndGlobalSection
+EndGlobal
