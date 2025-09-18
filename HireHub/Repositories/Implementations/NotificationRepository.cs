@@ -49,6 +49,8 @@ namespace HireHub.API.Repositories.Implementations
                 .FirstOrDefaultAsync(n => n.NotificationId == id);
         }
 
+        
+
         public async Task<Notification> AddAsync(Notification notification)
         {
             _context.Notifications.Add(notification);

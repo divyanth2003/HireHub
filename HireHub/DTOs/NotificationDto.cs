@@ -17,7 +17,8 @@ namespace HireHub.API.DTOs
         public string UserEmail { get; set; } = string.Empty;
     }
 
- 
+    }
+
     public class CreateNotificationDto
     {
         [Required]
@@ -70,4 +71,4 @@ namespace HireHub.API.DTOs
         [MaxLength(300)]
         public string? Message { get; set; }          // optional edit
     }
-}
+

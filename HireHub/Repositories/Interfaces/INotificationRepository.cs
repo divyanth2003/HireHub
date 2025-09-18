@@ -16,6 +16,7 @@ namespace HireHub.API.Repositories.Interfaces
         // Get a single notification
         Task<Notification?> GetByIdAsync(int id);
 
+
         // Add / Update / Delete
         Task<Notification> AddAsync(Notification notification);
         Task<Notification> UpdateAsync(Notification notification);

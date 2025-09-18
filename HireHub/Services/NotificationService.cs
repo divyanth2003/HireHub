@@ -13,17 +13,23 @@ namespace HireHub.API.Services
     public class NotificationService
     {
         private readonly INotificationRepository _notificationRepository;
+        private readonly IApplicationRepository _applicationRepository;
+        private readonly IEmailService _emailService;
         private readonly IMapper _mapper;
         private readonly ILogger<NotificationService> _logger;
 
         public NotificationService(
             INotificationRepository notificationRepository,
+            IApplicationRepository applicationRepository,
+            IEmailService emailService,
             IMapper mapper,
             ILogger<NotificationService> logger)
         {
-            _notificationRepository = notificationRepository;
-            _mapper = mapper;
-            _logger = logger;
+            _notificationRepository = notificationRepository ?? throw new ArgumentNullException(nameof(notificationRepository));
+            _applicationRepository = applicationRepository ?? throw new ArgumentNullException(nameof(applicationRepository));
+            _emailService = emailService ?? throw new ArgumentNullException(nameof(emailService));
+            _mapper = mapper ?? throw new ArgumentNullException(nameof(mapper));
+            _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         }
 
         // ------------------- GET -------------------
@@ -60,6 +66,49 @@ namespace HireHub.API.Services
 
             return _mapper.Map<NotificationDto>(notif);
         }
+        public async Task<NotificationDto> NotifyApplicantByApplicationAsync(EmployerNotifyApplicantDto dto, Guid employerUserId)
+        {
+            var app = await _applicationRepository.GetByIdWithDetailsAsync(dto.ApplicationId);
+            if (app == null)
+                throw new NotFoundException($"Application {dto.ApplicationId} not found.");
+
+            // Ensure Job and Employer.User are loaded
+            if (app.Job == null || app.Job.Employer == null || app.Job.Employer.User == null)
+                throw new InvalidOperationException("Application or job/employer relation incomplete.");
+
+            // Verify the logged-in employer owns the job (job.Employer.User.UserId is the employer user)
+            if (app.Job.Employer.User.UserId != employerUserId)
+                throw new ForbiddenException("Not authorized to message this applicant.");
+
+            // Create notification for jobseeker's user
+            var notif = new Notification
+            {
+                UserId = app.JobSeeker.User.UserId,
+                Subject = dto.Subject,
+                Message = dto.Message,
+                IsRead = false,
+                CreatedAt = DateTime.UtcNow
+            };
+
+            var created = await _notificationRepository.AddAsync(notif);
+
+            // Optionally send email
+            if (dto.SendEmail && !string.IsNullOrWhiteSpace(app.JobSeeker.User.Email))
+            {
+                var sent = await _emailService.SendAsync(
+                    app.JobSeeker.User.Email,
+                    dto.Subject ?? "Message from employer",
+                    dto.Message
+                );
+                if (sent)
+                    await _notificationRepository.SetSentEmailAsync(created.NotificationId);
+            }
+
+            var createdWithNav = await _notificationRepository.GetByIdAsync(created.NotificationId);
+            return _mapper.Map<NotificationDto>(createdWithNav ?? created);
+        }
+
+
 
         // ------------------- CREATE -------------------
         public async Task<NotificationDto> CreateAsync(CreateNotificationDto dto)

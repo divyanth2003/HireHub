@@ -9,6 +9,8 @@ namespace HireHub.API.Repositories.Interfaces
         Task<Application?> GetByIdAsync(int id);
         Task<IEnumerable<Application>> GetByJobAsync(int jobId);
         Task<IEnumerable<Application>> GetByJobSeekerAsync(Guid jobSeekerId);
+        Task<Application?> GetByIdWithDetailsAsync(int id);
+
 
         // ------------------- ADD/UPDATE/DELETE -------------------
         Task<Application> AddAsync(Application application);

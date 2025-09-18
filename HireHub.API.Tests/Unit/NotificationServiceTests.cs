@@ -17,6 +17,8 @@ namespace HireHub.API.Tests.Unit
     public class NotificationServiceTests
     {
         private readonly Mock<INotificationRepository> _repoMock;
+        private readonly Mock<IApplicationRepository> _applicationRepoMock; // NEW
+        private readonly Mock<IEmailService> _emailMock;                    // NEW
         private readonly Mock<IMapper> _mapperMock;
         private readonly Mock<ILogger<NotificationService>> _loggerMock;
         private readonly NotificationService _sut;
@@ -24,11 +26,16 @@ namespace HireHub.API.Tests.Unit
         public NotificationServiceTests()
         {
             _repoMock = new Mock<INotificationRepository>();
+            _applicationRepoMock = new Mock<IApplicationRepository>();
+            _emailMock = new Mock<IEmailService>();
             _mapperMock = new Mock<IMapper>();
             _loggerMock = new Mock<ILogger<NotificationService>>();
 
+            // construct SUT with all dependencies (order matters)
             _sut = new NotificationService(
                 _repoMock.Object,
+                _applicationRepoMock.Object,
+                _emailMock.Object,
                 _mapperMock.Object,
                 _loggerMock.Object
             );
@@ -40,17 +47,19 @@ namespace HireHub.API.Tests.Unit
             var userId = Guid.NewGuid();
             var entities = new List<Notification>
             {
-                new Notification { NotificationId = 1, UserId = userId, Message = "A" },
-                new Notification { NotificationId = 2, UserId = userId, Message = "B" }
+                new Notification { NotificationId = 1, UserId = userId, Message = "A", CreatedAt = DateTime.UtcNow },
+                new Notification { NotificationId = 2, UserId = userId, Message = "B", CreatedAt = DateTime.UtcNow }
             };
             var dtos = new List<NotificationDto>
             {
-                new NotificationDto { NotificationId = 1, UserId = userId, Message = "A" },
-                new NotificationDto { NotificationId = 2, UserId = userId, Message = "B" }
+                new NotificationDto { NotificationId = 1, UserId = userId, Message = "A", CreatedAt = DateTime.UtcNow },
+                new NotificationDto { NotificationId = 2, UserId = userId, Message = "B", CreatedAt = DateTime.UtcNow }
             };
 
             _repoMock.Setup(r => r.GetByUserAsync(userId)).ReturnsAsync(entities);
-            _mapperMock.Setup(m => m.Map<IEnumerable<NotificationDto>>(entities)).Returns(dtos);
+            // We can't use exact instance match on Map overload easily, so use It.IsAny<>
+            _mapperMock.Setup(m => m.Map<IEnumerable<NotificationDto>>(It.IsAny<IEnumerable<Notification>>()))
+                       .Returns(dtos);
 
             var result = await _sut.GetByUserAsync(userId);
 
@@ -93,13 +102,21 @@ namespace HireHub.API.Tests.Unit
                 NotificationId = entity.NotificationId,
                 UserId = entity.UserId,
                 Message = entity.Message,
-                IsRead = entity.IsRead
+                IsRead = entity.IsRead,
+                CreatedAt = entity.CreatedAt
             };
 
-            _mapperMock.Setup(m => m.Map<Notification>(createDto)).Returns(entity);
+            // Map from CreateNotificationDto to Notification (service uses mapper)
+            _mapperMock.Setup(m => m.Map<Notification>(It.IsAny<CreateNotificationDto>())).Returns(entity);
+
+            // Repo returns the entity on AddAsync
             _repoMock.Setup(r => r.AddAsync(It.IsAny<Notification>())).ReturnsAsync(entity);
+
+            // After create the service asks repo for GetByIdAsync to include navigation -> return entity
             _repoMock.Setup(r => r.GetByIdAsync(entity.NotificationId)).ReturnsAsync(entity);
-            _mapperMock.Setup(m => m.Map<NotificationDto>(entity)).Returns(returnedDto);
+
+            // Map Notification -> NotificationDto for returning to caller
+            _mapperMock.Setup(m => m.Map<NotificationDto>(It.IsAny<Notification>())).Returns(returnedDto);
 
             var result = await _sut.CreateAsync(createDto);
 
@@ -131,7 +148,8 @@ namespace HireHub.API.Tests.Unit
                 NotificationId = id,
                 UserId = Guid.NewGuid(),
                 Message = "hi",
-                IsRead = false
+                IsRead = false,
+                CreatedAt = DateTime.UtcNow
             };
 
             var updatedEntity = new Notification
@@ -139,7 +157,8 @@ namespace HireHub.API.Tests.Unit
                 NotificationId = id,
                 UserId = existing.UserId,
                 Message = existing.Message,
-                IsRead = true
+                IsRead = true,
+                CreatedAt = existing.CreatedAt
             };
 
             var returnedDto = new NotificationDto
@@ -147,7 +166,8 @@ namespace HireHub.API.Tests.Unit
                 NotificationId = id,
                 UserId = existing.UserId,
                 Message = existing.Message,
-                IsRead = true
+                IsRead = true,
+                CreatedAt = existing.CreatedAt
             };
 
             var updateDto = new UpdateNotificationDto { IsRead = true };
@@ -157,7 +177,7 @@ namespace HireHub.API.Tests.Unit
             _repoMock.Setup(r => r.UpdateAsync(It.Is<Notification>(n => n.NotificationId == id)))
                      .ReturnsAsync(updatedEntity);
             _repoMock.Setup(r => r.GetByIdAsync(updatedEntity.NotificationId)).ReturnsAsync(updatedEntity);
-            _mapperMock.Setup(m => m.Map<NotificationDto>(updatedEntity)).Returns(returnedDto);
+            _mapperMock.Setup(m => m.Map<NotificationDto>(It.IsAny<Notification>())).Returns(returnedDto);
 
             var result = await _sut.UpdateAsync(id, updateDto);
 

@@ -1,11 +1,12 @@
 using System;
 using System.Threading.Tasks;
+using System.Security.Claims;
 using HireHub.API.DTOs;
 using HireHub.API.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
-//edid
+
 namespace HireHub.API.Controllers
 {
     [ApiController]
@@ -50,6 +51,20 @@ namespace HireHub.API.Controllers
         {
             var notif = await _notificationService.GetByIdAsync(id);
             return Ok(notif);
+        }
+
+        [Authorize(Roles = "Employer")]
+        [HttpPost("application/message")]
+        public async Task<IActionResult> MessageApplicant([FromBody] EmployerNotifyApplicantDto dto)
+        {
+            if (!ModelState.IsValid) return BadRequest(ModelState);
+
+            var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (!Guid.TryParse(userIdClaim, out var employerUserId))
+                return Forbid();
+
+            var notif = await _notificationService.NotifyApplicantByApplicationAsync(dto, employerUserId);
+            return CreatedAtAction(nameof(GetById), new { id = notif.NotificationId }, notif);
         }
 
         // ------------------- CREATE -------------------

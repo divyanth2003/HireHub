@@ -52,6 +52,17 @@ namespace HireHub.API.Repositories.Implementations
                 .ToListAsync();
         }
 
+        public async Task<Application?> GetByIdWithDetailsAsync(int id)
+        {
+            return await _context.Applications
+                .Where(a => a.ApplicationId == id)
+                .Include(a => a.Job).ThenInclude(j => j.Employer).ThenInclude(e => e.User)
+                .Include(a => a.JobSeeker).ThenInclude(js => js.User)
+                .Include(a => a.Resume)
+                .FirstOrDefaultAsync();
+        }
+
+
         // ------------------- ADD/UPDATE/DELETE -------------------
         public async Task<Application> AddAsync(Application application)
         {
