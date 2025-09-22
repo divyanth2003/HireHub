@@ -11,9 +11,12 @@ using System.Security.Claims;
 using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
-var jwtConfig = builder.Configuration.GetSection("Jwt");
-var key = jwtConfig["Key"];
 
+// JWT config
+var jwtConfig = builder.Configuration.GetSection("Jwt");
+var key = jwtConfig["Key"] ?? throw new InvalidOperationException("Jwt:Key missing in configuration");
+
+// Authentication (JWT)
 builder.Services.AddAuthentication(options =>
 {
     options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
@@ -45,13 +48,14 @@ builder.Services.AddAuthentication(options =>
 
 builder.Services.AddAuthorization();
 
+// AutoMapper
 builder.Services.AddAutoMapper(typeof(MappingProfile));
 
+// Controllers + Swagger
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(c =>
 {
-    // Swagger: add JWT bearer input
     c.AddSecurityDefinition("Bearer", new Microsoft.OpenApi.Models.OpenApiSecurityScheme
     {
         Description = "JWT Authorization header using the Bearer scheme. Example: \"Authorization: Bearer {token}\"",
@@ -59,6 +63,7 @@ builder.Services.AddSwaggerGen(c =>
         In = Microsoft.OpenApi.Models.ParameterLocation.Header,
         Type = Microsoft.OpenApi.Models.SecuritySchemeType.ApiKey
     });
+
     c.AddSecurityRequirement(new Microsoft.OpenApi.Models.OpenApiSecurityRequirement{
         {
             new Microsoft.OpenApi.Models.OpenApiSecurityScheme{
@@ -69,13 +74,28 @@ builder.Services.AddSwaggerGen(c =>
             new string[]{}
         }
     });
-});           
+});
 
-//  Database connection
+// Database
 builder.Services.AddDbContext<HireHubContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("HireHub")));
 
-//  Register Repositories & Services
+// CORS - development friendly policy (replace origin with your frontend in prod)
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("DevCorsPolicy", policy =>
+    {
+        // In development allow your front-end origin(s). Example: React on localhost:3000
+        policy.WithOrigins("http://localhost:3000")
+              .AllowAnyHeader()
+              .AllowAnyMethod()
+              .AllowCredentials();
+    });
+    // Optional permissive for quick local testing (NOT for production)
+    // options.AddPolicy("AllowAllLocal", p => p.AllowAnyOrigin().AllowAnyHeader().AllowAnyMethod());
+});
+
+// Register repositories & services (kept your registrations)
 builder.Services.AddScoped<IUserRepository, UserRepository>();
 builder.Services.AddScoped<UserService>();
 
@@ -97,29 +117,35 @@ builder.Services.AddScoped<ApplicationService>();
 builder.Services.AddScoped<INotificationRepository, NotificationRepository>();
 builder.Services.AddScoped<NotificationService>();
 
+// Email service (you already have the simple logger implementation)
 builder.Services.AddScoped<IEmailService, EmailService>();
-
-
 
 builder.Logging.ClearProviders();
 builder.Logging.AddLog4Net("log4net.config");
 
 builder.Services.AddScoped<ITokenService, TokenService>();
+
 var app = builder.Build();
 
-//  Configure the HTTP request pipeline
+// HTTP request pipeline
 if (app.Environment.IsDevelopment())
 {
-    app.UseSwagger();   // Serve Swagger JSON
-    app.UseSwaggerUI(); // Serve Swagger UI
+    app.UseSwagger();
+    app.UseSwaggerUI();
 }
 
 app.UseHttpsRedirection();
 app.UseMiddleware<ExceptionHandlingMiddleware>();
 app.UseAuthentication();
 
+// IMPORTANT: enable CORS before Authorization so browser preflight/auth flows work
+app.UseCors("DevCorsPolicy");
+
 app.UseAuthorization();
 
 app.MapControllers();
 
 app.Run();
+
+// Make Program public so integration tests using WebApplicationFactory<Program> can access it.
+public partial class Program { }
