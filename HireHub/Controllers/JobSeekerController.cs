@@ -1,21 +1,27 @@
+// Controllers/JobSeekerController.cs
 using System;
 using System.Threading.Tasks;
 using HireHub.API.DTOs;
+using HireHub.API.Exceptions;
 using HireHub.API.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Logging;
 
 namespace HireHub.API.Controllers
 {
     [ApiController]
-    [Route("api/[controller]")]
+    [ApiVersion("1.0")]
+    [Route("api/v{version:apiversion}/[controller]")]
     public class JobSeekerController : ControllerBase
     {
         private readonly JobSeekerService _jobSeekerService;
+        private readonly ILogger<JobSeekerController> _logger;
 
-        public JobSeekerController(JobSeekerService jobSeekerService)
+        public JobSeekerController(JobSeekerService jobSeekerService, ILogger<JobSeekerController> logger)
         {
             _jobSeekerService = jobSeekerService;
+            _logger = logger;
         }
 
         // ------------------- ADMIN -------------------
@@ -91,8 +97,26 @@ namespace HireHub.API.Controllers
         [HttpDelete("{id:guid}")]
         public async Task<IActionResult> Delete(Guid id)
         {
-            await _jobSeekerService.DeleteAsync(id);
-            return NoContent();
+            try
+            {
+                await _jobSeekerService.DeleteAsync(id);
+                return NoContent();
+            }
+            catch (NotFoundException nf)
+            {
+                // repository/service told us the resource doesn't exist
+                return NotFound(new { message = nf.Message });
+            }
+            catch (ConflictException cf)
+            {
+                // delete blocked by dependent data (resumes/applications/etc.)
+                return Conflict(new { message = cf.Message });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error deleting jobseeker {JobSeekerId}", id);
+                return StatusCode(500, new { message = "Internal server error" });
+            }
         }
     }
 }

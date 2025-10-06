@@ -1,3 +1,4 @@
+// Program.cs
 using HireHub.API.Mappings;
 using HireHub.API.Middleware;
 using HireHub.API.Repositories.Implementations;
@@ -5,8 +6,15 @@ using HireHub.API.Repositories.Interfaces;
 using HireHub.API.Services;
 using HireHub.Data;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.ApiExplorer;
+using Microsoft.AspNetCore.Mvc.Versioning;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
+using Microsoft.OpenApi.Models;
+using Swashbuckle.AspNetCore.SwaggerGen;
+using HireHub.API.Configuration;
 using System.Security.Claims;
 using System.Text;
 
@@ -16,7 +24,6 @@ var builder = WebApplication.CreateBuilder(args);
 var jwtConfig = builder.Configuration.GetSection("Jwt");
 var key = jwtConfig["Key"] ?? throw new InvalidOperationException("Jwt:Key missing in configuration");
 
-// Authentication (JWT)
 builder.Services.AddAuthentication(options =>
 {
     options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
@@ -30,17 +37,12 @@ builder.Services.AddAuthentication(options =>
     {
         ValidateIssuer = true,
         ValidIssuer = jwtConfig["Issuer"],
-
         ValidateAudience = true,
         ValidAudience = jwtConfig["Audience"],
-
         ValidateLifetime = true,
-
         ValidateIssuerSigningKey = true,
         IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(key)),
-
         ClockSkew = TimeSpan.Zero,
-
         NameClaimType = ClaimTypes.NameIdentifier,
         RoleClaimType = ClaimTypes.Role
     };
@@ -51,51 +53,48 @@ builder.Services.AddAuthorization();
 // AutoMapper
 builder.Services.AddAutoMapper(typeof(MappingProfile));
 
-// Controllers + Swagger
+// Controllers + Versioning
 builder.Services.AddControllers();
-builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen(c =>
+builder.Services.AddApiVersioning(options =>
 {
-    c.AddSecurityDefinition("Bearer", new Microsoft.OpenApi.Models.OpenApiSecurityScheme
-    {
-        Description = "JWT Authorization header using the Bearer scheme. Example: \"Authorization: Bearer {token}\"",
-        Name = "Authorization",
-        In = Microsoft.OpenApi.Models.ParameterLocation.Header,
-        Type = Microsoft.OpenApi.Models.SecuritySchemeType.ApiKey
-    });
-
-    c.AddSecurityRequirement(new Microsoft.OpenApi.Models.OpenApiSecurityRequirement{
-        {
-            new Microsoft.OpenApi.Models.OpenApiSecurityScheme{
-                Reference = new Microsoft.OpenApi.Models.OpenApiReference {
-                    Id = "Bearer", Type = Microsoft.OpenApi.Models.ReferenceType.SecurityScheme
-                }
-            },
-            new string[]{}
-        }
-    });
+    options.AssumeDefaultVersionWhenUnspecified = true;
+    options.DefaultApiVersion = new ApiVersion(1, 0);
+    options.ReportApiVersions = true;
+    options.ApiVersionReader = new UrlSegmentApiVersionReader();
 });
+builder.Services.AddVersionedApiExplorer(options =>
+{
+    options.GroupNameFormat = "'v'VVV";
+    options.SubstituteApiVersionInUrl = true;
+});
+
+// Swagger
+builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddSwaggerGen();
+builder.Services.AddTransient<IConfigureOptions<SwaggerGenOptions>, ConfigureSwaggerOptions>();
 
 // Database
 builder.Services.AddDbContext<HireHubContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("HireHub")));
 
-// CORS - development friendly policy (replace origin with your frontend in prod)
+// CORS
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("DevCorsPolicy", policy =>
     {
-        // In development allow your front-end origin(s). Example: React on localhost:3000
-        policy.WithOrigins("http://localhost:3000")
-              .AllowAnyHeader()
-              .AllowAnyMethod()
-              .AllowCredentials();
+        policy.WithOrigins(
+                "http://localhost:5173",
+                "https://localhost:5173",
+                "http://127.0.0.1:5173",
+                "https://127.0.0.1:5173"
+            )
+            .AllowAnyHeader()
+            .AllowAnyMethod()
+            .AllowCredentials();
     });
-    // Optional permissive for quick local testing (NOT for production)
-    // options.AddPolicy("AllowAllLocal", p => p.AllowAnyOrigin().AllowAnyHeader().AllowAnyMethod());
 });
 
-// Register repositories & services (kept your registrations)
+// DI: repositories & services
 builder.Services.AddScoped<IUserRepository, UserRepository>();
 builder.Services.AddScoped<UserService>();
 
@@ -117,35 +116,39 @@ builder.Services.AddScoped<ApplicationService>();
 builder.Services.AddScoped<INotificationRepository, NotificationRepository>();
 builder.Services.AddScoped<NotificationService>();
 
-// Email service (you already have the simple logger implementation)
 builder.Services.AddScoped<IEmailService, EmailService>();
+builder.Services.AddScoped<ITokenService, TokenService>();
 
+// Logging
 builder.Logging.ClearProviders();
 builder.Logging.AddLog4Net("log4net.config");
 
-builder.Services.AddScoped<ITokenService, TokenService>();
-
 var app = builder.Build();
 
-// HTTP request pipeline
+// Middleware pipeline
 if (app.Environment.IsDevelopment())
 {
+    app.UseDeveloperExceptionPage();
+    app.UseStaticFiles();
     app.UseSwagger();
-    app.UseSwaggerUI();
+    app.UseSwaggerUI(options =>
+    {
+        var provider = app.Services.GetRequiredService<IApiVersionDescriptionProvider>();
+        foreach (var desc in provider.ApiVersionDescriptions)
+        {
+            options.SwaggerEndpoint($"/swagger/{desc.GroupName}/swagger.json",
+                $"HireHub API {desc.GroupName.ToUpperInvariant()}");
+        }
+    });
 }
 
 app.UseHttpsRedirection();
 app.UseMiddleware<ExceptionHandlingMiddleware>();
 app.UseAuthentication();
-
-// IMPORTANT: enable CORS before Authorization so browser preflight/auth flows work
 app.UseCors("DevCorsPolicy");
-
 app.UseAuthorization();
-
 app.MapControllers();
-
 app.Run();
 
-// Make Program public so integration tests using WebApplicationFactory<Program> can access it.
+// allow integration tests to host the app
 public partial class Program { }

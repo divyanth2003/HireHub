@@ -1,173 +1,169 @@
-﻿//using System;
-//using System.Collections.Generic;
-//using System.Threading.Tasks;
-//using AutoMapper;
-//using FluentAssertions;
-//using Microsoft.Extensions.Logging;
-//using Moq;
-//using Xunit;
-//using HireHub.API.DTOs;
-//using HireHub.API.Models;
-//using HireHub.API.Repositories.Interfaces;
-//using HireHub.API.Services;
-//using HireHub.API.Exceptions;
+﻿using System;
+using System.Collections.Generic;
+using System.Threading.Tasks;
+using AutoMapper;
+using FluentAssertions;
+using HireHub.API.DTOs;
+using HireHub.API.Models;
+using HireHub.API.Repositories.Interfaces;
+using HireHub.API.Services;
+using Microsoft.Extensions.Logging;
+using Moq;
+using Xunit;
 
-//namespace HireHub.API.Tests.Unit
-//{
-//    public class ApplicationServiceTests
-//    {
-//        private readonly Mock<IApplicationRepository> _repoMock;
-//        private readonly Mock<IMapper> _mapperMock;
-//        private readonly Mock<ILogger<ApplicationService>> _loggerMock;
-//        private readonly ApplicationService _sut;
+namespace HireHub.API.Tests.Unit
+{
+    public class ApplicationServiceTests
+    {
+        private readonly Mock<IApplicationRepository> _repoMock;
+        private readonly Mock<IMapper> _mapperMock;
+        private readonly Mock<ILogger<ApplicationService>> _loggerMock;
+        private readonly ApplicationService _sut;
 
-//        public ApplicationServiceTests()
-//        {
-//            _repoMock = new Mock<IApplicationRepository>();
-//            _mapperMock = new Mock<IMapper>();
-//            _loggerMock = new Mock<ILogger<ApplicationService>>();
+        public ApplicationServiceTests()
+        {
+            _repoMock = new Mock<IApplicationRepository>();
+            _mapperMock = new Mock<IMapper>();
+            _loggerMock = new Mock<ILogger<ApplicationService>>();
 
-//            _sut = new ApplicationService(
-//                _repoMock.Object,
-//                _mapperMock.Object,
-//                _loggerMock.Object
-//            );
-//        }
+            _sut = new ApplicationService(_repoMock.Object, _mapperMock.Object, _loggerMock.Object);
+        }
 
-//        [Fact]
-//        public async Task GetByIdAsync_ShouldThrowNotFoundException_WhenNotFound()
-//        {
-//            // Arrange
-//            var id = 11;
-//            _repoMock.Setup(r => r.GetByIdAsync(id)).ReturnsAsync((Application?)null);
+        [Fact]
+        public async Task GetByIdAsync_ShouldThrowNotFound_WhenMissing()
+        {
+            // arrange
+            var id = 100;
+            _repoMock.Setup(r => r.GetByIdAsync(id)).ReturnsAsync((Application?)null);
 
-//            // Act
-//            var act = async () => await _sut.GetByIdAsync(id);
+            // act
+            Func<Task> act = async () => await _sut.GetByIdAsync(id);
 
-//            // Assert
-//            await act.Should().ThrowAsync<NotFoundException>()
-//                .WithMessage($"Application with id '{id}' not found.");
-//        }
+            // assert
+            await act.Should().ThrowAsync<Exception>().Where(e => e.Message.Contains("not found"));
+        }
 
-//        [Fact]
-//        public async Task CreateAsync_ShouldReturnMappedDto_WhenCreated()
-//        {
-//            // Arrange
-//            var createDto = new CreateApplicationDto
-//            {
-//                JobId = 2,
-//                JobSeekerId = Guid.NewGuid(),
-//                ResumeId = 3,
-//                CoverLetter = "cover"
-//            };
+        [Fact]
+        public async Task CreateAsync_ShouldReturnMappedDto_WhenCreated()
+        {
+            // arrange
+            var dto = new CreateApplicationDto
+            {
+                JobId = 1,
+                JobSeekerId = Guid.NewGuid(),
+                ResumeId = null,
+                CoverLetter = "Hi"
+            };
 
-//            var entity = new Application
-//            {
-//                ApplicationId = 7,
-//                JobId = createDto.JobId,
-//                JobSeekerId = createDto.JobSeekerId,
-//                ResumeId = createDto.ResumeId,
-//                CoverLetter = createDto.CoverLetter,
-//                Status = "Applied",
-//                AppliedAt = DateTime.UtcNow
-//            };
+            var entity = new Application
+            {
+                ApplicationId = 55,
+                JobId = dto.JobId,
+                JobSeekerId = dto.JobSeekerId,
+                ResumeId = dto.ResumeId ?? 0,
+                CoverLetter = dto.CoverLetter,
+                Status = "Applied",
+                AppliedAt = DateTime.UtcNow
+            };
 
-//            var persisted = new Application
-//            {
-//                ApplicationId = entity.ApplicationId,
-//                JobId = entity.JobId,
-//                JobSeekerId = entity.JobSeekerId,
-//                ResumeId = entity.ResumeId,
-//                CoverLetter = entity.CoverLetter,
-//                Status = entity.Status,
-//                AppliedAt = entity.AppliedAt
-//            };
+            var mappedDto = new ApplicationDto
+            {
+                ApplicationId = entity.ApplicationId,
+                JobId = entity.JobId,
+                JobSeekerId = entity.JobSeekerId,
+                CoverLetter = entity.CoverLetter,
+                Status = entity.Status,
+                AppliedAt = entity.AppliedAt
+            };
 
-//            var returnedDto = new ApplicationDto
-//            {
-//                ApplicationId = persisted.ApplicationId,
-//                JobId = persisted.JobId,
-//                JobSeekerId = persisted.JobSeekerId,
-//                ResumeId = persisted.ResumeId,
-//                CoverLetter = persisted.CoverLetter,
-//                Status = persisted.Status
-//            };
+            _mapperMock.Setup(m => m.Map<Application>(dto)).Returns(entity);
+            _repoMock.Setup(r => r.AddAsync(It.IsAny<Application>())).ReturnsAsync(entity);
+            _repoMock.Setup(r => r.GetByIdAsync(entity.ApplicationId)).ReturnsAsync(entity);
+            _mapperMock.Setup(m => m.Map<ApplicationDto>(entity)).Returns(mappedDto);
 
-//            _mapperMock.Setup(m => m.Map<Application>(createDto)).Returns(entity);
-//            _repoMock.Setup(r => r.AddAsync(It.IsAny<Application>())).ReturnsAsync(persisted);
-//            _repoMock.Setup(r => r.GetByIdAsync(persisted.ApplicationId)).ReturnsAsync(persisted);
-//            _mapperMock.Setup(m => m.Map<ApplicationDto>(persisted)).Returns(returnedDto);
+            // act
+            var result = await _sut.CreateAsync(dto);
 
-//            // Act
-//            var result = await _sut.CreateAsync(createDto);
+            // assert
+            result.Should().NotBeNull();
+            result.ApplicationId.Should().Be(entity.ApplicationId);
+            _repoMock.Verify(r => r.AddAsync(It.IsAny<Application>()), Times.Once);
+        }
 
-//            // Assert
-//            result.Should().NotBeNull();
-//            result.ApplicationId.Should().Be(persisted.ApplicationId);
-//            result.JobId.Should().Be(createDto.JobId);
-//            result.JobSeekerId.Should().Be(createDto.JobSeekerId);
-//        }
+        [Fact]
+        public async Task UpdateAsync_ShouldThrowNotFound_WhenMissing()
+        {
+            // arrange
+            var id = 77;
+            var updateDto = new UpdateApplicationDto { Status = "Reviewed" };
+            _repoMock.Setup(r => r.GetByIdAsync(id)).ReturnsAsync((Application?)null);
 
-//        [Fact]
-//        public async Task GetByJobAsync_ShouldReturnMappedList()
-//        {
-//            // Arrange
-//            var jobId = 5;
-//            var list = new List<Application>
-//            {
-//                new Application { ApplicationId = 1, JobId = jobId, JobSeekerId = Guid.NewGuid() },
-//                new Application { ApplicationId = 2, JobId = jobId, JobSeekerId = Guid.NewGuid() }
-//            };
+            Func<Task> act = async () => await _sut.UpdateAsync(id, updateDto);
 
-//            var dtoList = new List<ApplicationDto>
-//            {
-//                new ApplicationDto { ApplicationId = 1, JobId = jobId },
-//                new ApplicationDto { ApplicationId = 2, JobId = jobId }
-//            };
+            await act.Should().ThrowAsync<Exception>().Where(e => e.Message.Contains("not found"));
+        }
 
-//            _repoMock.Setup(r => r.GetByJobAsync(jobId)).ReturnsAsync(list);
-//            _mapperMock.Setup(m => m.Map<IEnumerable<ApplicationDto>>(list)).Returns(dtoList);
+        [Fact]
+        public async Task MarkReviewedAsync_ShouldReturnMappedDto_WhenUpdated()
+        {
+            // arrange
+            var appId = 200;
+            var notes = "Looks good";
 
-//            // Act
-//            var result = await _sut.GetByJobAsync(jobId);
+            var updatedEntity = new Application
+            {
+                ApplicationId = appId,
+                JobId = 1,
+                JobSeekerId = Guid.NewGuid(),
+                ReviewedAt = DateTime.UtcNow,
+                Notes = notes
+            };
 
-//            // Assert
-//            result.Should().NotBeNull();
-//            result.Should().HaveCount(2);
-//        }
+            var mappedDto = new ApplicationDto
+            {
+                ApplicationId = appId,
+                JobId = updatedEntity.JobId,
+                JobSeekerId = updatedEntity.JobSeekerId,
+                ReviewedAt = updatedEntity.ReviewedAt,
+                Notes = updatedEntity.Notes
+            };
 
-//        [Fact]
-//        public async Task UpdateAsync_ShouldThrowNotFoundException_WhenNotExists()
-//        {
-//            // Arrange
-//            var id = 99;
-//            var updateDto = new UpdateApplicationDto { CoverLetter = "x" };
-//            _repoMock.Setup(r => r.GetByIdAsync(id)).ReturnsAsync((Application?)null);
+            _repoMock.Setup(r => r.MarkReviewedAsync(appId, notes)).ReturnsAsync(updatedEntity);
+            _mapperMock.Setup(m => m.Map<ApplicationDto>(updatedEntity)).Returns(mappedDto);
 
-//            // Act
-//            var act = async () => await _sut.UpdateAsync(id, updateDto);
+            // act
+            var result = await _sut.MarkReviewedAsync(appId, notes);
 
-//            // Assert
-//            await act.Should().ThrowAsync<NotFoundException>()
-//                .WithMessage($"Application with id '{id}' not found.");
-//        }
+            // assert
+            result.Should().NotBeNull();
+            result!.ApplicationId.Should().Be(appId);
+            result.Notes.Should().Be(notes);
+        }
 
-//        [Fact]
-//        public async Task DeleteAsync_ShouldThrowNotFoundException_WhenDeleteReturnsFalse()
-//        {
-//            // Arrange
-//            var id = 42;
-//            _repoMock.Setup(r => r.DeleteAsync(id)).ReturnsAsync(false);
+        [Fact]
+        public async Task GetByJobAsync_ReturnsMappedList()
+        {
+            // arrange
+            var jobId = 5;
+            var list = new List<Application>
+            {
+                new Application { ApplicationId = 1, JobId = jobId, JobSeekerId = Guid.NewGuid() }
+            };
 
-//            // Act
-//            var act = async () => await _sut.DeleteAsync(id);
+            var dtoList = new List<ApplicationDto>
+            {
+                new ApplicationDto { ApplicationId = 1, JobId = jobId }
+            };
 
-//            // Assert
-//            await act.Should().ThrowAsync<NotFoundException>()
-//                .WithMessage($"Application with id '{id}' not found.");
-//        }
+            _repoMock.Setup(r => r.GetByJobAsync(jobId)).ReturnsAsync(list);
+            _mapperMock.Setup(m => m.Map<IEnumerable<ApplicationDto>>(list)).Returns(dtoList);
 
-   
+            // act
+            var result = await _sut.GetByJobAsync(jobId);
 
-//    }
-//}
+            // assert
+            result.Should().NotBeNull();
+            result.Should().HaveCount(1);
+        }
+    }
+}

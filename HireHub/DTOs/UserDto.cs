@@ -15,7 +15,7 @@ namespace HireHub.API.DTOs
 
         public string Role { get; set; } = string.Empty;
 
-        public DateTime Dob { get; set; }
+        public DateOnly DateOfBirth { get; set; }
 
         public string Gender { get; set; } = string.Empty;
 
@@ -40,7 +40,7 @@ namespace HireHub.API.DTOs
         public string Role { get; set; } = "JobSeeker";
 
         [Required]
-        public DateTime Dob { get; set; }
+        public DateOnly DateOfBirth { get; set; }
 
         [Required, MaxLength(10)]
         public string Gender { get; set; } = string.Empty;
@@ -60,7 +60,7 @@ namespace HireHub.API.DTOs
         public string Role { get; set; } = "JobSeeker";
 
         [Required]
-        public DateTime Dob { get; set; }
+        public DateOnly DateOfBirth { get; set; }
 
         [Required, MaxLength(10)]
         public string Gender { get; set; } = string.Empty;

@@ -8,7 +8,8 @@ using Microsoft.AspNetCore.Mvc;
 namespace HireHub.API.Controllers
 {
     [ApiController]
-    [Route("api/[controller]")]
+    [ApiVersion("1.0")]
+    [Route("api/v{version:apiversion}/[controller]")]
     public class JobController : ControllerBase
     {
         private readonly JobService _jobService;
@@ -67,6 +68,14 @@ namespace HireHub.API.Controllers
             var jobs = await _jobService.SearchBySkillAsync(skill);
             return Ok(jobs);
         }
+        [AllowAnonymous]
+        [HttpGet("search/company")]
+        public async Task<IActionResult> SearchByCompany([FromQuery] string company)
+        {
+            var jobs = await _jobService.SearchByCompanyAsync(company);
+            return Ok(jobs);
+        }
+
 
         // ------------------- CREATE -------------------
         [Authorize(Roles = "Employer")]

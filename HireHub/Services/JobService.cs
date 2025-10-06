@@ -73,6 +73,13 @@ namespace HireHub.API.Services
             var jobs = await _jobRepository.SearchBySkillAsync(skill);
             return _mapper.Map<IEnumerable<JobDto>>(jobs);
         }
+        public async Task<IEnumerable<JobDto>> SearchByCompanyAsync(string company)
+        {
+            _logger.LogInformation("Searching jobs by company {Company}", company);
+            var jobs = await _jobRepository.SearchByCompanyAsync(company);
+            return _mapper.Map<IEnumerable<JobDto>>(jobs);
+        }
+
 
         // ------------------- CREATE -------------------
         public async Task<JobDto> CreateAsync(CreateJobDto dto)

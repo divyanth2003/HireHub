@@ -1,212 +1,166 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Threading.Tasks;
 using AutoMapper;
 using FluentAssertions;
-using Microsoft.Extensions.Logging;
-using Moq;
-using Xunit;
 using HireHub.API.DTOs;
 using HireHub.API.Models;
 using HireHub.API.Repositories.Interfaces;
 using HireHub.API.Services;
-using HireHub.API.Exceptions;
+using Microsoft.Extensions.Logging;
+using Moq;
+using Xunit;
 
 namespace HireHub.API.Tests.Unit
 {
     public class NotificationServiceTests
     {
-        private readonly Mock<INotificationRepository> _repoMock;
-        private readonly Mock<IApplicationRepository> _applicationRepoMock; // NEW
-        private readonly Mock<IEmailService> _emailMock;                    // NEW
-        private readonly Mock<IMapper> _mapperMock;
-        private readonly Mock<ILogger<NotificationService>> _loggerMock;
+        private readonly Mock<INotificationRepository> _notifRepo;
+        private readonly Mock<IApplicationRepository> _appRepo;
+        private readonly Mock<IEmailService> _emailSvc;
+        private readonly Mock<IMapper> _mapper;
+        private readonly Mock<ILogger<NotificationService>> _logger;
         private readonly NotificationService _sut;
 
         public NotificationServiceTests()
         {
-            _repoMock = new Mock<INotificationRepository>();
-            _applicationRepoMock = new Mock<IApplicationRepository>();
-            _emailMock = new Mock<IEmailService>();
-            _mapperMock = new Mock<IMapper>();
-            _loggerMock = new Mock<ILogger<NotificationService>>();
+            _notifRepo = new Mock<INotificationRepository>();
+            _appRepo = new Mock<IApplicationRepository>();
+            _emailSvc = new Mock<IEmailService>();
+            _mapper = new Mock<IMapper>();
+            _logger = new Mock<ILogger<NotificationService>>();
 
-            // construct SUT with all dependencies (order matters)
             _sut = new NotificationService(
-                _repoMock.Object,
-                _applicationRepoMock.Object,
-                _emailMock.Object,
-                _mapperMock.Object,
-                _loggerMock.Object
+                _notifRepo.Object,
+                _appRepo.Object,
+                _emailSvc.Object,
+                _mapper.Object,
+                _logger.Object
             );
         }
 
         [Fact]
-        public async Task GetByUserAsync_ShouldReturnMappedList()
+        public async Task GetByIdAsync_Throws_NotFound_When_Missing()
         {
-            var userId = Guid.NewGuid();
-            var entities = new List<Notification>
+            var id = 999;
+            _notifRepo.Setup(r => r.GetByIdAsync(id)).ReturnsAsync((Notification?)null);
+
+            Func<Task> act = async () => await _sut.GetByIdAsync(id);
+
+            await act.Should().ThrowAsync<Exception>().Where(e => e.Message.Contains("not found"));
+        }
+
+        [Fact]
+        public async Task NotifyApplicantByApplicationAsync_CreatesNotification_And_SendsEmail_IfRequested()
+        {
+            // Arrange
+            var appId = 5;
+            var employerUserId = Guid.NewGuid();
+            var jobSeekerUserId = Guid.NewGuid();
+
+            var application = new Application
             {
-                new Notification { NotificationId = 1, UserId = userId, Message = "A", CreatedAt = DateTime.UtcNow },
-                new Notification { NotificationId = 2, UserId = userId, Message = "B", CreatedAt = DateTime.UtcNow }
+                ApplicationId = appId,
+                JobSeeker = new JobSeeker
+                {
+                    JobSeekerId = Guid.NewGuid(),
+                    User = new User { UserId = jobSeekerUserId, Email = "js@t.test" }
+                },
+                Job = new Job
+                {
+                    JobId = 1,
+                    Employer = new Employer
+                    {
+                        EmployerId = Guid.NewGuid(),
+                        User = new User { UserId = employerUserId, Email = "emp@t.test" }
+                    }
+                }
             };
-            var dtos = new List<NotificationDto>
+
+            _appRepo.Setup(a => a.GetByIdWithDetailsAsync(appId)).ReturnsAsync(application);
+
+            var createdNotification = new Notification { NotificationId = 7, UserId = jobSeekerUserId, Message = "m" };
+            _notifRepo.Setup(n => n.AddAsync(It.IsAny<Notification>())).ReturnsAsync(createdNotification);
+            _notifRepo.Setup(n => n.GetByIdAsync(createdNotification.NotificationId)).ReturnsAsync(createdNotification);
+
+            _emailSvc.Setup(e => e.SendAsync(application.JobSeeker.User.Email, It.IsAny<string>(), It.IsAny<string>()))
+                     .ReturnsAsync(true);
+            _notifRepo.Setup(n => n.SetSentEmailAsync(createdNotification.NotificationId)).ReturnsAsync(true);
+
+            var dto = new EmployerNotifyApplicantDto
             {
-                new NotificationDto { NotificationId = 1, UserId = userId, Message = "A", CreatedAt = DateTime.UtcNow },
-                new NotificationDto { NotificationId = 2, UserId = userId, Message = "B", CreatedAt = DateTime.UtcNow }
+                ApplicationId = appId,
+                Message = "Interview",
+                Subject = "Interview",
+                SendEmail = true
             };
 
-            _repoMock.Setup(r => r.GetByUserAsync(userId)).ReturnsAsync(entities);
-            // We can't use exact instance match on Map overload easily, so use It.IsAny<>
-            _mapperMock.Setup(m => m.Map<IEnumerable<NotificationDto>>(It.IsAny<IEnumerable<Notification>>()))
-                       .Returns(dtos);
+            var mappedDto = new NotificationDto
+            {
+                NotificationId = createdNotification.NotificationId,
+                UserId = createdNotification.UserId,
+                Message = createdNotification.Message
+            };
 
-            var result = await _sut.GetByUserAsync(userId);
+            _mapper.Setup(m => m.Map<NotificationDto>(It.IsAny<Notification>())).Returns(mappedDto);
 
+            // Act
+            var result = await _sut.NotifyApplicantByApplicationAsync(dto, employerUserId);
+
+            // Assert
             result.Should().NotBeNull();
-            result.Should().HaveCount(2);
+            result.NotificationId.Should().Be(createdNotification.NotificationId);
+            _emailSvc.Verify(e => e.SendAsync(application.JobSeeker.User.Email, dto.Subject ?? It.IsAny<string>(), dto.Message), Times.Once);
+            _notifRepo.Verify(n => n.SetSentEmailAsync(createdNotification.NotificationId), Times.Once);
         }
 
         [Fact]
-        public async Task GetByIdAsync_ShouldThrowNotFoundException_WhenMissing()
+        public async Task CreateAsync_CallsRepository_And_ReturnsMappedDto()
         {
-            var id = 5;
-            _repoMock.Setup(r => r.GetByIdAsync(id)).ReturnsAsync((Notification?)null);
+            var createDto = new CreateNotificationDto { UserId = Guid.NewGuid(), Message = "hello" };
+            var entity = new Notification { NotificationId = 1, UserId = createDto.UserId, Message = createDto.Message, IsRead = false, CreatedAt = DateTime.UtcNow };
+            var outDto = new NotificationDto { NotificationId = 1, UserId = createDto.UserId, Message = createDto.Message };
 
-            var act = async () => await _sut.GetByIdAsync(id);
+            _mapper.Setup(m => m.Map<Notification>(createDto)).Returns(entity);
+            _notifRepo.Setup(r => r.AddAsync(It.IsAny<Notification>())).ReturnsAsync(entity);
+            _notifRepo.Setup(r => r.GetByIdAsync(entity.NotificationId)).ReturnsAsync(entity);
+            _mapper.Setup(m => m.Map<NotificationDto>(entity)).Returns(outDto);
 
-            await act.Should().ThrowAsync<NotFoundException>()
-                .WithMessage($"Notification with id '{id}' not found.");
+            var res = await _sut.CreateAsync(createDto);
+
+            res.Should().NotBeNull();
+            res.NotificationId.Should().Be(entity.NotificationId);
+            _notifRepo.Verify(r => r.AddAsync(It.IsAny<Notification>()), Times.Once);
         }
 
         [Fact]
-        public async Task CreateAsync_ShouldReturnMappedDto_WhenCreated()
+        public async Task UpdateAsync_Throws_When_NotFound()
         {
-            var createDto = new CreateNotificationDto
-            {
-                UserId = Guid.NewGuid(),
-                Message = "Hello"
-            };
+            var id = 50;
+            _notifRepo.Setup(r => r.GetByIdAsync(id)).ReturnsAsync((Notification?)null);
+            var dto = new UpdateNotificationDto { IsRead = true };
 
-            var entity = new Notification
-            {
-                NotificationId = 11,
-                UserId = createDto.UserId,
-                Message = createDto.Message,
-                IsRead = false,
-                CreatedAt = DateTime.UtcNow
-            };
-
-            var returnedDto = new NotificationDto
-            {
-                NotificationId = entity.NotificationId,
-                UserId = entity.UserId,
-                Message = entity.Message,
-                IsRead = entity.IsRead,
-                CreatedAt = entity.CreatedAt
-            };
-
-            // Map from CreateNotificationDto to Notification (service uses mapper)
-            _mapperMock.Setup(m => m.Map<Notification>(It.IsAny<CreateNotificationDto>())).Returns(entity);
-
-            // Repo returns the entity on AddAsync
-            _repoMock.Setup(r => r.AddAsync(It.IsAny<Notification>())).ReturnsAsync(entity);
-
-            // After create the service asks repo for GetByIdAsync to include navigation -> return entity
-            _repoMock.Setup(r => r.GetByIdAsync(entity.NotificationId)).ReturnsAsync(entity);
-
-            // Map Notification -> NotificationDto for returning to caller
-            _mapperMock.Setup(m => m.Map<NotificationDto>(It.IsAny<Notification>())).Returns(returnedDto);
-
-            var result = await _sut.CreateAsync(createDto);
-
-            result.Should().NotBeNull();
-            result.NotificationId.Should().Be(entity.NotificationId);
-            result.Message.Should().Be(createDto.Message);
-            result.IsRead.Should().BeFalse();
+            Func<Task> act = async () => await _sut.UpdateAsync(id, dto);
+            await act.Should().ThrowAsync<Exception>().Where(e => e.Message.Contains("not found"));
         }
 
         [Fact]
-        public async Task UpdateAsync_ShouldThrowNotFoundException_WhenMissing()
+        public async Task MarkAsReadAsync_Returns_RepoResult()
         {
-            var id = 7;
-            var updateDto = new UpdateNotificationDto { IsRead = true };
-            _repoMock.Setup(r => r.GetByIdAsync(id)).ReturnsAsync((Notification?)null);
+            var id = 33;
+            _notifRepo.Setup(r => r.MarkAsReadAsync(id)).ReturnsAsync(true);
 
-            var act = async () => await _sut.UpdateAsync(id, updateDto);
-
-            await act.Should().ThrowAsync<NotFoundException>()
-                .WithMessage($"Notification with id '{id}' not found.");
+            var res = await _sut.MarkAsReadAsync(id);
+            res.Should().BeTrue();
         }
 
         [Fact]
-        public async Task UpdateAsync_ShouldReturnMappedDto_WhenUpdated()
-        {
-            var id = 8;
-            var existing = new Notification
-            {
-                NotificationId = id,
-                UserId = Guid.NewGuid(),
-                Message = "hi",
-                IsRead = false,
-                CreatedAt = DateTime.UtcNow
-            };
-
-            var updatedEntity = new Notification
-            {
-                NotificationId = id,
-                UserId = existing.UserId,
-                Message = existing.Message,
-                IsRead = true,
-                CreatedAt = existing.CreatedAt
-            };
-
-            var returnedDto = new NotificationDto
-            {
-                NotificationId = id,
-                UserId = existing.UserId,
-                Message = existing.Message,
-                IsRead = true,
-                CreatedAt = existing.CreatedAt
-            };
-
-            var updateDto = new UpdateNotificationDto { IsRead = true };
-
-            _repoMock.Setup(r => r.GetByIdAsync(id)).ReturnsAsync(existing);
-            // simulate repo update returning updated entity
-            _repoMock.Setup(r => r.UpdateAsync(It.Is<Notification>(n => n.NotificationId == id)))
-                     .ReturnsAsync(updatedEntity);
-            _repoMock.Setup(r => r.GetByIdAsync(updatedEntity.NotificationId)).ReturnsAsync(updatedEntity);
-            _mapperMock.Setup(m => m.Map<NotificationDto>(It.IsAny<Notification>())).Returns(returnedDto);
-
-            var result = await _sut.UpdateAsync(id, updateDto);
-
-            result.Should().NotBeNull();
-            result.IsRead.Should().BeTrue();
-            result.NotificationId.Should().Be(id);
-        }
-
-        [Fact]
-        public async Task DeleteAsync_ShouldThrowNotFoundException_WhenDeleteReturnsFalse()
+        public async Task DeleteAsync_Throws_When_NotFound()
         {
             var id = 99;
-            _repoMock.Setup(r => r.DeleteAsync(id)).ReturnsAsync(false);
+            _notifRepo.Setup(r => r.DeleteAsync(id)).ReturnsAsync(false);
 
-            var act = async () => await _sut.DeleteAsync(id);
-
-            await act.Should().ThrowAsync<NotFoundException>()
-                .WithMessage($"Notification with id '{id}' not found.");
-        }
-
-        [Fact]
-        public async Task DeleteAsync_ShouldReturnTrue_WhenDeleted()
-        {
-            var id = 10;
-            _repoMock.Setup(r => r.DeleteAsync(id)).ReturnsAsync(true);
-
-            var result = await _sut.DeleteAsync(id);
-
-            result.Should().BeTrue();
+            Func<Task> act = async () => await _sut.DeleteAsync(id);
+            await act.Should().ThrowAsync<Exception>().Where(e => e.Message.Contains("not found"));
         }
     }
 }

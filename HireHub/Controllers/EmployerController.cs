@@ -8,7 +8,8 @@ using Microsoft.AspNetCore.Mvc;
 namespace HireHub.API.Controllers
 {
     [ApiController]
-    [Route("api/[controller]")]
+    [ApiVersion("1.0")]
+    [Route("api/v{version:apiversion}/[controller]")]
     public class EmployerController : ControllerBase
     {
         private readonly EmployerService _employerService;
@@ -19,7 +20,7 @@ namespace HireHub.API.Controllers
         }
 
         // ------------------- GET -------------------
-        [Authorize(Roles = "Admin")]
+       [Authorize(Roles = "Admin")]
         [HttpGet]
         public async Task<IActionResult> GetAll()
         {
@@ -60,7 +61,7 @@ namespace HireHub.API.Controllers
         }
 
         // ------------------- CREATE -------------------
-        [Authorize(Roles = "Admin,Employer")]
+       [Authorize(Roles = "Admin,Employer")]
         [HttpPost]
         public async Task<IActionResult> Create([FromBody] CreateEmployerDto dto)
         {
@@ -71,7 +72,7 @@ namespace HireHub.API.Controllers
         }
 
         // ------------------- UPDATE -------------------
-        [Authorize(Roles = "Admin,Employer")]
+      [Authorize(Roles = "Admin,Employer")]
         [HttpPut("{id:guid}")]
         public async Task<IActionResult> Update(Guid id, [FromBody] UpdateEmployerDto dto)
         {
@@ -82,7 +83,7 @@ namespace HireHub.API.Controllers
         }
 
         // ------------------- DELETE -------------------
-        [Authorize(Roles = "Admin,Employer")]
+       [Authorize(Roles = "Admin,Employer")]
         [HttpDelete("{id:guid}")]
         public async Task<IActionResult> Delete(Guid id)
         {

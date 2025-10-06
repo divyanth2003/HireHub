@@ -21,6 +21,9 @@ namespace HireHub.API.Repositories.Interfaces
         Task<JobSeeker> AddAsync(JobSeeker jobSeeker);
         Task<JobSeeker> UpdateAsync(JobSeeker jobSeeker);
         Task<bool> DeleteAsync(Guid id);
+        // Utility: check if a JobSeeker has any dependent data (Resumes / Applications)
+        Task<bool> HasDependentsAsync(Guid jobSeekerId);
+
 
         // Utility: check if a JobSeeker exists for a given UserId
         Task<bool> ExistsForUserAsync(Guid userId);

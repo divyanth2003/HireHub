@@ -10,7 +10,8 @@ using Microsoft.AspNetCore.Mvc;
 namespace HireHub.API.Controllers
 {
     [ApiController]
-    [Route("api/[controller]")]
+    [ApiVersion("1.0")]
+    [Route("api/v{version:apiversion}/[controller]")]
     public class NotificationController : ControllerBase
     {
         private readonly NotificationService _notificationService;

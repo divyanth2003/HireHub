@@ -12,8 +12,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace HireHub.Migrations
 {
     [DbContext(typeof(HireHubContext))]
-    [Migration("20250917175153_UpdateJobApplicationNotificationResumeModels")]
-    partial class UpdateJobApplicationNotificationResumeModels
+    [Migration("20251003123454_Dateofbirth_datatype")]
+    partial class Dateofbirth_datatype
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -297,7 +297,7 @@ namespace HireHub.Migrations
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime2");
 
-                    b.Property<DateTime>("DateOfBirth")
+                    b.Property<DateOnly>("DateOfBirth")
                         .HasColumnType("date");
 
                     b.Property<string>("Email")

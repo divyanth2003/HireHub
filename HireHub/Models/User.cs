@@ -21,7 +21,7 @@ namespace HireHub.API.Models
         public string Role { get; set; } = string.Empty;
 
         [Required] [Column(TypeName="date")]
-        public DateTime Dateofbirth { get; set; }
+        public DateOnly DateOfBirth { get; set; }
 
         [Required, MaxLength(10)]
         public string Gender { get; set; } = string.Empty;

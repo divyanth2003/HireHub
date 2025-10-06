@@ -1,4 +1,7 @@
-﻿using System;
+﻿// DTOs/ResumeDtos.cs
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc;
+using System;
 using System.ComponentModel.DataAnnotations;
 
 namespace HireHub.API.DTOs
@@ -9,7 +12,7 @@ namespace HireHub.API.DTOs
         public Guid JobSeekerId { get; set; }
 
         [Required, MaxLength(150)]
-        public string ResumeName { get; set; } = string.Empty;   // new
+        public string ResumeName { get; set; } = string.Empty;
 
         [Required, MaxLength(300)]
         public string FilePath { get; set; } = string.Empty;
@@ -20,9 +23,9 @@ namespace HireHub.API.DTOs
         public DateTime UpdatedAt { get; set; }
 
         [MaxLength(10)]
-        public string? FileType { get; set; }    // new
+        public string? FileType { get; set; }
 
-        public bool IsDefault { get; set; }      
+        public bool IsDefault { get; set; }
         public string JobSeekerName { get; set; } = string.Empty;
     }
 
@@ -32,7 +35,7 @@ namespace HireHub.API.DTOs
         public Guid JobSeekerId { get; set; }
 
         [Required, MaxLength(150)]
-        public string ResumeName { get; set; } = string.Empty;   // new
+        public string ResumeName { get; set; } = string.Empty;
 
         [Required, MaxLength(300)]
         public string FilePath { get; set; } = string.Empty;
@@ -41,16 +44,15 @@ namespace HireHub.API.DTOs
         public string? ParsedSkills { get; set; }
 
         [MaxLength(10)]
-        public string? FileType { get; set; }    // new
+        public string? FileType { get; set; }
 
-        // Optional: allow client to mark uploaded resume as default
         public bool IsDefault { get; set; } = false;
     }
 
     public class UpdateResumeDto
     {
         [Required, MaxLength(150)]
-        public string ResumeName { get; set; } = string.Empty;   // new
+        public string ResumeName { get; set; } = string.Empty;
 
         [Required, MaxLength(300)]
         public string FilePath { get; set; } = string.Empty;
@@ -59,8 +61,30 @@ namespace HireHub.API.DTOs
         public string? ParsedSkills { get; set; }
 
         [MaxLength(10)]
-        public string? FileType { get; set; }    // new
+        public string? FileType { get; set; }
 
         public bool IsDefault { get; set; } = false;
+    }
+
+    // Single DTO used by the multipart/form-data upload action
+    public class ResumeUploadFormDto
+    {
+        [Required]
+        [FromForm(Name = "jobSeekerId")]
+        public Guid JobSeekerId { get; set; }
+
+        [Required]
+        [FromForm(Name = "resumeName")]
+        public string ResumeName { get; set; } = string.Empty;
+
+        [FromForm(Name = "isDefault")]
+        public bool IsDefault { get; set; } = false;
+
+        [FromForm(Name = "parsedSkills")]
+        public string? ParsedSkills { get; set; }
+
+        // IMPORTANT: this property name is "file" — frontend must append "file"
+        [FromForm(Name = "file")]
+        public IFormFile? File { get; set; }
     }
 }

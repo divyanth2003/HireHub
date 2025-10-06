@@ -78,7 +78,7 @@ namespace HireHub.API.Tests.Integration
                 Email = $"testuser.{Guid.NewGuid():N}@hirehub.test",
                 Password = "Password1!",
                 Role = "JobSeeker",
-                Dob = DateTime.UtcNow.AddYears(-25),
+                DateOfBirth = DateOnly.FromDateTime(DateTime.UtcNow.AddYears(-24)),
                 Gender = "Other",
                 Address = "Test Address"
             };

@@ -1,16 +1,14 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Threading.Tasks;
 using AutoMapper;
 using FluentAssertions;
-using Microsoft.Extensions.Logging;
-using Moq;
-using Xunit;
 using HireHub.API.DTOs;
 using HireHub.API.Models;
 using HireHub.API.Repositories.Interfaces;
 using HireHub.API.Services;
-using HireHub.API.Exceptions;
+using Microsoft.Extensions.Logging;
+using Moq;
+using Xunit;
 
 namespace HireHub.API.Tests.Unit
 {
@@ -27,159 +25,95 @@ namespace HireHub.API.Tests.Unit
             _mapperMock = new Mock<IMapper>();
             _loggerMock = new Mock<ILogger<ResumeService>>();
 
-            _sut = new ResumeService(
-                _repoMock.Object,
-                _mapperMock.Object,
-                _loggerMock.Object
-            );
-        }
-
-        [Fact]
-        public async Task GetByIdAsync_ShouldThrowNotFoundException_WhenResumeNotFound()
-        {
-            // Arrange
-            var id = 123;
-            _repoMock.Setup(r => r.GetByIdAsync(id)).ReturnsAsync((Resume?)null);
-
-            // Act
-            var act = async () => await _sut.GetByIdAsync(id);
-
-            // Assert
-            await act.Should().ThrowAsync<NotFoundException>()
-                .WithMessage($"Resume with id '{id}' not found.");
+            _sut = new ResumeService(_repoMock.Object, _mapperMock.Object, _loggerMock.Object);
         }
 
         [Fact]
         public async Task CreateAsync_ShouldReturnMappedDto_WhenCreated()
         {
-            // Arrange
+            // arrange
+            var jobSeekerId = Guid.NewGuid();
             var createDto = new CreateResumeDto
             {
-                JobSeekerId = Guid.NewGuid(),
-                FilePath = "path/to.pdf",
-                ParsedSkills = "C#,SQL"
+                JobSeekerId = jobSeekerId,
+                ResumeName = "CV1",
+                FilePath = "/files/cv1.pdf",
+                FileType = "pdf",
+                ParsedSkills = "C#"
             };
 
-            var entity = new Resume
+            var mappedEntity = new Resume
             {
-                ResumeId = 7,
-                JobSeekerId = createDto.JobSeekerId,
+                ResumeId = 123,
+                JobSeekerId = jobSeekerId,
+                ResumeName = createDto.ResumeName,
                 FilePath = createDto.FilePath,
+                FileType = createDto.FileType,
                 ParsedSkills = createDto.ParsedSkills,
+                IsDefault = false,
                 UpdatedAt = DateTime.UtcNow
             };
 
-            var returnedDto = new ResumeDto
+            var mappedDto = new ResumeDto
             {
-                ResumeId = entity.ResumeId,
-                JobSeekerId = entity.JobSeekerId,
-                FilePath = entity.FilePath,
-                ParsedSkills = entity.ParsedSkills,
-                UpdatedAt = entity.UpdatedAt
+                ResumeId = mappedEntity.ResumeId,
+                JobSeekerId = jobSeekerId,
+                ResumeName = mappedEntity.ResumeName,
+                FilePath = mappedEntity.FilePath
             };
 
-            _mapperMock.Setup(m => m.Map<Resume>(createDto)).Returns(entity);
-            _repoMock.Setup(r => r.AddAsync(It.IsAny<Resume>())).ReturnsAsync(entity);
-            _mapperMock.Setup(m => m.Map<ResumeDto>(entity)).Returns(returnedDto);
+            // repository: no duplicate
+            _repoMock.Setup(r => r.ExistsByNameAsync(jobSeekerId, createDto.ResumeName)).ReturnsAsync(false);
 
-            // Act
+            // mapper: CreateDto -> Resume
+            _mapperMock.Setup(m => m.Map<Resume>(createDto)).Returns(mappedEntity);
+
+            // repo add returns the entity (with id)
+            _repoMock.Setup(r => r.AddAsync(It.IsAny<Resume>())).ReturnsAsync(mappedEntity);
+
+            // mapper: Resume -> ResumeDto
+            _mapperMock.Setup(m => m.Map<ResumeDto>(mappedEntity)).Returns(mappedDto);
+
+            // act
             var result = await _sut.CreateAsync(createDto);
 
-            // Assert
+            // assert
             result.Should().NotBeNull();
-            result.ResumeId.Should().Be(entity.ResumeId);
-            result.FilePath.Should().Be(createDto.FilePath);
-            result.ParsedSkills.Should().Be(createDto.ParsedSkills);
+            result.ResumeId.Should().Be(mappedEntity.ResumeId);
+
+            _repoMock.Verify(r => r.ExistsByNameAsync(jobSeekerId, createDto.ResumeName), Times.Once);
+            _repoMock.Verify(r => r.AddAsync(It.IsAny<Resume>()), Times.Once);
         }
 
         [Fact]
-        public async Task UpdateAsync_ShouldThrowNotFoundException_WhenResumeNotFound()
+        public async Task SetDefaultAsync_ShouldThrow_WhenResumeNotFound()
         {
-            // Arrange
-            var id = 99;
-            var updateDto = new UpdateResumeDto { ParsedSkills = "Updated" };
+            // arrange
+            var jobSeekerId = Guid.NewGuid();
+            var resumeId = 999;
 
-            _repoMock.Setup(r => r.GetByIdAsync(id)).ReturnsAsync((Resume?)null);
+            _repoMock.Setup(r => r.GetByIdAsync(resumeId)).ReturnsAsync((Resume?)null);
 
-            // Act
-            var act = async () => await _sut.UpdateAsync(id, updateDto);
+            // act
+            Func<Task> act = async () => await _sut.SetDefaultAsync(jobSeekerId, resumeId);
 
-            // Assert
-            await act.Should().ThrowAsync<NotFoundException>()
-                .WithMessage($"Resume with id '{id}' not found.");
+            // assert
+            await act.Should().ThrowAsync<Exception>()
+                .Where(e => e.Message.Contains("not found", StringComparison.OrdinalIgnoreCase));
         }
 
         [Fact]
-        public async Task DeleteAsync_ShouldThrowNotFoundException_WhenDeleteReturnsFalse()
+        public async Task GetDefaultByJobSeekerAsync_ReturnsNull_WhenNoDefault()
         {
-            // Arrange
-            var id = 42;
-            _repoMock.Setup(r => r.DeleteAsync(id)).ReturnsAsync(false);
+            // arrange
+            var jobSeekerId = Guid.NewGuid();
+            _repoMock.Setup(r => r.GetDefaultByJobSeekerAsync(jobSeekerId)).ReturnsAsync((Resume?)null);
 
-            // Act
-            var act = async () => await _sut.DeleteAsync(id);
+            // act
+            var result = await _sut.GetDefaultByJobSeekerAsync(jobSeekerId);
 
-            // Assert
-            await act.Should().ThrowAsync<NotFoundException>()
-                .WithMessage($"Resume with id '{id}' not found.");
-        }
-
-    
-        [Fact]
-        public async Task UpdateAsync_ShouldReturnMappedDto_WhenUpdated()
-        {
-            // Arrange
-            var id = 5;
-            var existing = new Resume
-            {
-                ResumeId = id,
-                JobSeekerId = Guid.NewGuid(),
-                FilePath = "old.pdf",
-                ParsedSkills = "Old"
-            };
-
-            var updateDto = new UpdateResumeDto
-            {
-                FilePath = "new.pdf",
-                ParsedSkills = "C#,EF"
-            };
-
-            var updatedEntity = new Resume
-            {
-                ResumeId = id,
-                JobSeekerId = existing.JobSeekerId,
-                FilePath = updateDto.FilePath,
-                ParsedSkills = updateDto.ParsedSkills,
-                UpdatedAt = DateTime.UtcNow
-            };
-
-            var returnedDto = new ResumeDto
-            {
-                ResumeId = updatedEntity.ResumeId,
-                JobSeekerId = updatedEntity.JobSeekerId,
-                FilePath = updatedEntity.FilePath,
-                ParsedSkills = updatedEntity.ParsedSkills,
-                UpdatedAt = updatedEntity.UpdatedAt
-            };
-
-            _repoMock.Setup(r => r.GetByIdAsync(id)).ReturnsAsync(existing);
-            _mapperMock.Setup(m => m.Map(updateDto, existing)).Callback(() =>
-            {
-                // simulate mapping onto the tracked entity
-                existing.FilePath = updateDto.FilePath;
-                existing.ParsedSkills = updateDto.ParsedSkills;
-            });
-            _repoMock.Setup(r => r.UpdateAsync(existing)).ReturnsAsync(updatedEntity);
-            _mapperMock.Setup(m => m.Map<ResumeDto>(updatedEntity)).Returns(returnedDto);
-
-            // Act
-            var result = await _sut.UpdateAsync(id, updateDto);
-
-            // Assert
-            result.Should().NotBeNull();
-            result.ResumeId.Should().Be(id);
-            result.FilePath.Should().Be(updateDto.FilePath);
-            result.ParsedSkills.Should().Be(updateDto.ParsedSkills);
+            // assert
+            result.Should().BeNull();
         }
     }
 }

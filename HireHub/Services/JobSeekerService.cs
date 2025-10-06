@@ -128,19 +128,39 @@ namespace HireHub.API.Services
         }
 
         // ------------------- DELETE -------------------
+        // JobSeekerService.cs
         public async Task<bool> DeleteAsync(Guid id)
         {
             _logger.LogInformation("Deleting jobseeker {JobSeekerId}", id);
 
-            var deleted = await _jobSeekerRepository.DeleteAsync(id);
-            if (!deleted)
+            // check if exists
+            var jobSeeker = await _jobSeekerRepository.GetByIdAsync(id);
+            if (jobSeeker == null)
             {
                 _logger.LogWarning("JobSeeker {JobSeekerId} not found for deletion", id);
                 throw new NotFoundException($"JobSeeker with id '{id}' not found.");
             }
 
+            // check dependents
+            var hasDeps = await _jobSeekerRepository.HasDependentsAsync(id);
+            if (hasDeps)
+            {
+                _logger.LogWarning("JobSeeker {JobSeekerId} has dependent records", id);
+                throw new ConflictException("Cannot delete profile: dependent data exists (resumes/applications). Please delete them first.");
+            }
+
+            // actually delete
+            var deleted = await _jobSeekerRepository.DeleteAsync(id);
+            if (!deleted)
+            {
+                _logger.LogWarning("JobSeeker {JobSeekerId} deletion failed", id);
+                throw new Exception("Failed to delete jobseeker for unknown reason");
+            }
+
             _logger.LogInformation("JobSeeker {JobSeekerId} deleted", id);
             return true;
         }
+
+
     }
 }

@@ -54,7 +54,8 @@ namespace HireHub.API.Tests.Unit
                 // create a real bcrypt hash so BCrypt.Verify works if your service uses it
                 PasswordHash = BCrypt.Net.BCrypt.HashPassword(pwd),
                 Role = role,
-                Dateofbirth = DateTime.UtcNow.AddYears(-25),
+                DateOfBirth = DateOnly.FromDateTime(DateTime.UtcNow.AddYears(-24)),
+
                 Gender = "Other",
                 Address = "Addr",
                 CreatedAt = DateTime.UtcNow
@@ -69,7 +70,8 @@ namespace HireHub.API.Tests.Unit
                 Email = email,
                 Password = "Password1!",
                 Role = "JobSeeker",
-                Dob = DateTime.UtcNow.AddYears(-22),
+                DateOfBirth = DateOnly.FromDateTime(DateTime.UtcNow.AddYears(-24)),
+
                 Gender = "Other",
                 Address = "Addr"
             };
@@ -143,7 +145,8 @@ namespace HireHub.API.Tests.Unit
                 Email = "test@example.com",
                 Password = "Password123",
                 Role = "JobSeeker",
-                Dob = DateTime.UtcNow.AddYears(-25),
+                DateOfBirth = DateOnly.FromDateTime(DateTime.UtcNow.AddYears(-24)),
+
                 Gender = "Other",
                 Address = "Somewhere"
             };
@@ -155,7 +158,7 @@ namespace HireHub.API.Tests.Unit
                 Email = dto.Email,
                 PasswordHash = "hashed-password",
                 Role = dto.Role,
-                Dateofbirth = dto.Dob,
+                DateOfBirth = dto.DateOfBirth,
                 Gender = dto.Gender,
                 Address = dto.Address,
                 CreatedAt = DateTime.UtcNow
@@ -175,7 +178,7 @@ namespace HireHub.API.Tests.Unit
                            FullName = entity.FullName,
                            Email = entity.Email,
                            Role = entity.Role,
-                           Dob = entity.Dateofbirth,
+                           DateOfBirth = entity.DateOfBirth,
                            Gender = entity.Gender,
                            Address = entity.Address
                        });
@@ -212,7 +215,8 @@ namespace HireHub.API.Tests.Unit
             {
                 FullName = "X",
                 Role = "JobSeeker",
-                Dob = DateTime.UtcNow.AddYears(-22),
+                DateOfBirth = DateOnly.FromDateTime(DateTime.UtcNow.AddYears(-24)),
+
                 Gender = "Other",
                 Address = "A"
             };
@@ -236,7 +240,7 @@ namespace HireHub.API.Tests.Unit
                 Email = existing.Email,
                 PasswordHash = existing.PasswordHash,
                 Role = "Employer",
-                Dateofbirth = existing.Dateofbirth,
+                DateOfBirth = existing.DateOfBirth,
                 Gender = existing.Gender,
                 Address = existing.Address
             };
@@ -245,7 +249,7 @@ namespace HireHub.API.Tests.Unit
             {
                 FullName = updatedEntity.FullName,
                 Role = updatedEntity.Role,
-                Dob = updatedEntity.Dateofbirth,
+                DateOfBirth = updatedEntity.DateOfBirth,
                 Gender = updatedEntity.Gender,
                 Address = updatedEntity.Address
             };
@@ -256,7 +260,7 @@ namespace HireHub.API.Tests.Unit
                 FullName = updatedEntity.FullName,
                 Email = updatedEntity.Email,
                 Role = updatedEntity.Role,
-                Dob = updatedEntity.Dateofbirth,
+                DateOfBirth = updatedEntity.DateOfBirth,
                 Gender = updatedEntity.Gender,
                 Address = updatedEntity.Address
             };

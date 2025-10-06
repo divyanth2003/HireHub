@@ -104,6 +104,15 @@ namespace HireHub.API.Mappings
             CreateMap<Job, JobDto>()
                 .ForMember(d => d.EmployerName, opt => opt.MapFrom(s => s.Employer.CompanyName));
 
+            // e.g. MappingProfile.cs
+            CreateMap<Job, JobDto>()
+    .ForMember(dest => dest.EmployerName,
+               opt => opt.MapFrom(src =>
+                    src.Employer != null
+                      ? (src.Employer.CompanyName ?? src.Employer.User.FullName ?? string.Empty)
+                      : string.Empty
+               ));
+
             // CreateJobDto -> Job
             CreateMap<CreateJobDto, Job>()
                 .ForMember(d => d.JobId, opt => opt.Ignore())
@@ -121,25 +130,22 @@ namespace HireHub.API.Mappings
 
 
             // ----------------- RESUME -----------------
-          
+
             CreateMap<Resume, ResumeDto>()
-               .ForMember(d => d.JobSeekerName,
-                    opt => opt.MapFrom(s => s.JobSeeker != null && s.JobSeeker.User != null
-                                   ? s.JobSeeker.User.FullName
-                                   : string.Empty));
+     .ForMember(d => d.JobSeekerName,
+          opt => opt.MapFrom(s => s.JobSeeker != null && s.JobSeeker.User != null
+                         ? s.JobSeeker.User.FullName
+                         : string.Empty));
 
-
-            // CreateResumeDto -> Resume
             CreateMap<CreateResumeDto, Resume>()
                 .ForMember(d => d.ResumeId, opt => opt.Ignore())
-                .ForMember(d => d.UpdatedAt, opt => opt.Ignore()) // set UpdatedAt in service on create
+                .ForMember(d => d.UpdatedAt, opt => opt.Ignore())
                 .ForMember(d => d.JobSeeker, opt => opt.Ignore())
                 .ForMember(d => d.Applications, opt => opt.Ignore());
 
-            // UpdateResumeDto -> Resume
             CreateMap<UpdateResumeDto, Resume>()
                 .ForMember(d => d.ResumeId, opt => opt.Ignore())
-                .ForMember(d => d.UpdatedAt, opt => opt.Ignore()) // update UpdatedAt in service on update
+                .ForMember(d => d.UpdatedAt, opt => opt.Ignore())
                 .ForMember(d => d.JobSeekerId, opt => opt.Ignore())
                 .ForMember(d => d.JobSeeker, opt => opt.Ignore())
                 .ForMember(d => d.Applications, opt => opt.Ignore());

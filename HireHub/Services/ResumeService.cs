@@ -1,12 +1,15 @@
-using System;
-using System.Collections.Generic;
-using System.Threading.Tasks;
+// Services/ResumeService.cs
 using AutoMapper;
-using Microsoft.Extensions.Logging;
 using HireHub.API.DTOs;
+using HireHub.API.Exceptions;
 using HireHub.API.Models;
 using HireHub.API.Repositories.Interfaces;
-using HireHub.API.Exceptions;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
+using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Threading.Tasks;
 
 namespace HireHub.API.Services
 {
@@ -15,6 +18,8 @@ namespace HireHub.API.Services
         private readonly IResumeRepository _resumeRepository;
         private readonly IMapper _mapper;
         private readonly ILogger<ResumeService> _logger;
+        private readonly string _wwwroot;
+        private readonly string _uploadsRoot;
 
         public ResumeService(
             IResumeRepository resumeRepository,
@@ -24,6 +29,10 @@ namespace HireHub.API.Services
             _resumeRepository = resumeRepository;
             _mapper = mapper;
             _logger = logger;
+
+            // compute once
+            _wwwroot = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot");
+            _uploadsRoot = Path.Combine(_wwwroot, "Uploads");
         }
 
         // ------------------- GET -------------------
@@ -58,7 +67,7 @@ namespace HireHub.API.Services
         // ------------------- CREATE -------------------
         public async Task<ResumeDto> CreateAsync(CreateResumeDto dto)
         {
-            // Check duplicate resume name
+            // duplicate check
             if (await _resumeRepository.ExistsByNameAsync(dto.JobSeekerId, dto.ResumeName))
                 throw new DuplicateEmailException($"Resume '{dto.ResumeName}' already exists for this JobSeeker.");
 
@@ -67,7 +76,6 @@ namespace HireHub.API.Services
 
             var created = await _resumeRepository.AddAsync(resume);
 
-            // If marked as default, enforce rule
             if (created.IsDefault)
                 await _resumeRepository.SetDefaultAsync(created.JobSeekerId, created.ResumeId);
 
@@ -95,11 +103,76 @@ namespace HireHub.API.Services
         // ------------------- DELETE -------------------
         public async Task<bool> DeleteAsync(int id)
         {
-            var deleted = await _resumeRepository.DeleteAsync(id);
-            if (!deleted)
-                throw new NotFoundException($"Resume with id '{id}' not found.");
+            _logger.LogInformation("Deleting resume {ResumeId}", id);
 
-            return true;
+            // fetch full entity so we can know FilePath and JobSeekerId etc
+            var resume = await _resumeRepository.GetByIdAsync(id);
+            if (resume == null)
+            {
+                _logger.LogWarning("Resume {ResumeId} not found", id);
+                throw new NotFoundException($"Resume with id '{id}' not found.");
+            }
+
+            // OPTIONAL: fast fail if dependent data exists (requires repository method)
+            // if (await _resumeRepository.HasDependentsAsync(id))
+            // {
+            //     _logger.LogWarning("Resume {ResumeId} has dependents, cannot delete", id);
+            //     throw new ConflictException($"Cannot delete resume {id}: dependent data exists. Delete dependents first.");
+            // }
+
+            // try remove physical file first (best effort)
+            try
+            {
+                if (!string.IsNullOrWhiteSpace(resume.FilePath))
+                {
+                    // resume.FilePath stored like "Uploads/xxxx.pdf" - normalize separators
+                    var relative = resume.FilePath.Replace('/', Path.DirectorySeparatorChar).TrimStart(Path.DirectorySeparatorChar);
+                    var webRoot = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot");
+                    var fullPath = Path.Combine(webRoot, relative);
+
+                    if (File.Exists(fullPath))
+                    {
+                        File.Delete(fullPath);
+                        _logger.LogInformation("Deleted file {FilePath} for resume {ResumeId}", fullPath, id);
+                    }
+                    else
+                    {
+                        _logger.LogInformation("File {FilePath} not found while deleting resume {ResumeId}", fullPath, id);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                // don't block delete just because file removal failed — log and continue.
+                _logger.LogError(ex, "Failed deleting file for resume {ResumeId}, continuing to remove DB record", id);
+            }
+
+            // remove DB record
+            try
+            {
+                var deleted = await _resumeRepository.DeleteAsync(id);
+                if (!deleted)
+                {
+                    _logger.LogWarning("Resume {ResumeId} delete returned false", id);
+                    throw new NotFoundException($"Resume with id '{id}' not found.");
+                }
+                _logger.LogInformation("Resume {ResumeId} deleted", id);
+                return true;
+            }
+            catch (DbUpdateException dbex)
+            {
+                // database-level constraint (foreign key, etc) -> translate to 409 Conflict
+                var inner = dbex.InnerException?.Message ?? dbex.Message;
+                _logger.LogWarning(dbex, "DB delete failed for resume {ResumeId} because of dependent data: {DbMessage}", id, inner);
+
+                // friendlier message for client; DB message is logged
+                throw new ConflictException($"Cannot delete resume {id}: dependent data exists. Delete dependents first.");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error deleting resume {ResumeId}", id);
+                throw; // let controller map to 500
+            }
         }
 
         // ------------------- UTILITIES -------------------

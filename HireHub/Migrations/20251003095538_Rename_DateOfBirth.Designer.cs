@@ -12,8 +12,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace HireHub.Migrations
 {
     [DbContext(typeof(HireHubContext))]
-    [Migration("20250917175153_UpdateJobApplicationNotificationResumeModels")]
-    partial class UpdateJobApplicationNotificationResumeModels
+    [Migration("20251003095538_Rename_DateOfBirth")]
+    partial class Rename_DateOfBirth
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)

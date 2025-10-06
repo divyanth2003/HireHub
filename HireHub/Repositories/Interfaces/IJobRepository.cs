@@ -14,6 +14,12 @@ namespace HireHub.API.Repositories.Interfaces
         Task<IEnumerable<Job>> SearchByLocationAsync(string location);
         Task<IEnumerable<Job>> SearchBySkillAsync(string skill);
 
+        // in IJobRepository
+        // IJobRepository.cs
+        Task<IEnumerable<Job>> SearchByCompanyAsync(string company);
+
+
+
         // ------------------- ADD/UPDATE/DELETE -------------------
         Task<Job> AddAsync(Job job);
         Task<Job> UpdateAsync(Job job);

@@ -92,7 +92,8 @@ namespace HireHub.API.Tests.Integration
                         Email = SeedAdminEmail,
                         PasswordHash = "hashed-password",
                         Role = "Admin",
-                        Dateofbirth = DateTime.UtcNow.AddYears(-30),
+                        DateOfBirth = DateOnly.FromDateTime(DateTime.UtcNow.AddYears(-24)),
+
                         Gender = "Other",
                         Address = "Test Address",
                         CreatedAt = DateTime.UtcNow

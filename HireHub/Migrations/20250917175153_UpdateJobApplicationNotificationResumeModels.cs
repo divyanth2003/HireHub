@@ -12,7 +12,7 @@ namespace HireHub.Migrations
         protected override void Up(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.AlterColumn<DateTime>(
-                name: "Dateofbirth",
+                name: "DateOfBirth",
                 table: "Users",
                 type: "date",
                 nullable: false,
@@ -204,7 +204,7 @@ namespace HireHub.Migrations
                 table: "Applications");
 
             migrationBuilder.AlterColumn<DateTime>(
-                name: "Dateofbirth",
+                name: "DateOfBirth",
                 table: "Users",
                 type: "datetime2",
                 nullable: false,

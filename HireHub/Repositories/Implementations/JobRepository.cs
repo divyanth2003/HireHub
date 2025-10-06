@@ -63,6 +63,27 @@ namespace HireHub.API.Repositories.Implementations
                 .Include(j => j.Employer)
                 .ToListAsync();
         }
+        // ensure present
+
+        public async Task<IEnumerable<Job>> SearchByCompanyAsync(string company)
+        {
+            if (string.IsNullOrWhiteSpace(company))
+                return Enumerable.Empty<Job>();
+
+            var pattern = $"%{company}%";
+
+            return await _context.Jobs
+                .Include(j => j.Employer)
+                    .ThenInclude(e => e.User)
+                .Where(j =>
+                    (j.Employer != null && j.Employer.CompanyName != null && EF.Functions.Like(j.Employer.CompanyName, pattern))
+                    ||
+                    (j.Employer != null && j.Employer.User != null && j.Employer.User.FullName != null && EF.Functions.Like(j.Employer.User.FullName, pattern))
+                )
+                .ToListAsync();
+        }
+
+
 
         // ------------------- ADD/UPDATE/DELETE -------------------
         public async Task<Job> AddAsync(Job job)

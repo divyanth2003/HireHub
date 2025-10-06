@@ -8,7 +8,8 @@ using Microsoft.AspNetCore.Mvc;
 namespace HireHub.API.Controllers
 {
     [ApiController]
-    [Route("api/[controller]")]
+    [ApiVersion("1.0")]
+    [Route("api/v{version:apiversion}/[controller]")]
     public class UserController : ControllerBase
     {
         private readonly UserService _userService;
@@ -50,7 +51,7 @@ namespace HireHub.API.Controllers
             return Ok(users);
         }
 
-        [Authorize(Roles = "Admin")]
+        [Authorize(Roles = "Admin,Employer,JobSeeker")]
         [HttpGet("{id:guid}")]
         public async Task<IActionResult> GetById(Guid id)
         {
