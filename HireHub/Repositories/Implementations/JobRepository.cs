@@ -14,12 +14,12 @@ namespace HireHub.API.Repositories.Implementations
             _context = context;
         }
 
-        // ------------------- GET -------------------
+      
         public async Task<IEnumerable<Job>> GetAllAsync()
         {
             return await _context.Jobs
                 .Include(j => j.Employer)
-                .ThenInclude(e => e.User) // include employer's user info
+                .ThenInclude(e => e.User)
                 .ToListAsync();
         }
 
@@ -63,7 +63,7 @@ namespace HireHub.API.Repositories.Implementations
                 .Include(j => j.Employer)
                 .ToListAsync();
         }
-        // ensure present
+    
 
         public async Task<IEnumerable<Job>> SearchByCompanyAsync(string company)
         {
@@ -85,7 +85,6 @@ namespace HireHub.API.Repositories.Implementations
 
 
 
-        // ------------------- ADD/UPDATE/DELETE -------------------
         public async Task<Job> AddAsync(Job job)
         {
             _context.Jobs.Add(job);

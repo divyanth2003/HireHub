@@ -7,7 +7,7 @@ namespace HireHub.Data
     {
         public HireHubContext(DbContextOptions<HireHubContext> options) : base(options) { }
 
-        // DbSets for each table
+        
         public DbSet<User> Users { get; set; }
         public DbSet<Employer> Employers { get; set; }
         public DbSet<JobSeeker> JobSeekers { get; set; }

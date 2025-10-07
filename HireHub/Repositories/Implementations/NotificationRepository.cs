@@ -106,13 +106,13 @@ namespace HireHub.API.Repositories.Implementations
             return items.Count;
         }
 
-        // Notifications that haven't been sent via email yet (SentEmail == false)
+     
         public async Task<IEnumerable<Notification>> GetUnsentEmailNotificationsAsync(int limit = 50)
         {
             return await _context.Notifications
                 .Where(n => !n.SentEmail)
                 .Include(n => n.User)
-                .OrderBy(n => n.CreatedAt) // oldest first to send older ones first
+                .OrderBy(n => n.CreatedAt) 
                 .Take(limit)
                 .ToListAsync();
         }

@@ -16,7 +16,7 @@ namespace HireHub.API.DTOs
         public string Status { get; set; } = "Applied";
         public DateTime AppliedAt { get; set; }
 
-        // New fields
+      
         public DateTime? ReviewedAt { get; set; }     
         public string? Notes { get; set; }             
         public bool IsShortlisted { get; set; } = false;

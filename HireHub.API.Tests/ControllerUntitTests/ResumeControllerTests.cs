@@ -37,7 +37,6 @@ namespace HireHub.API.Tests.Controllers
             _controller = new ResumeController(_service, _controllerLoggerMock.Object);
         }
 
-        // ------------------- GET -------------------
         [Fact]
         public async Task GetAll_WhenCalled_ReturnsOkWithResumes()
         {
@@ -118,7 +117,6 @@ namespace HireHub.API.Tests.Controllers
             Assert.IsType<NotFoundObjectResult>(res);
         }
 
-        // ------------------- CREATE METADATA -------------------
         [Fact]
         public async Task CreateMetadata_Valid_ReturnsCreatedAtAction()
         {
@@ -140,26 +138,25 @@ namespace HireHub.API.Tests.Controllers
         [Fact]
         public async Task CreateMetadata_Duplicate_ReturnsConflictObjectResult()
         {
-            // Arrange
+           
             var jobSeekerId = Guid.NewGuid();
             var dto = new CreateResumeDto { JobSeekerId = jobSeekerId, ResumeName = "Dup", FilePath = "x.pdf" };
 
-            // service will call repository.ExistsByNameAsync -> service throws DuplicateEmailException
+       
             _repoMock.Setup(r => r.ExistsByNameAsync(dto.JobSeekerId, dto.ResumeName)).ReturnsAsync(true);
 
-            // Act
+        
             var result = await _controller.CreateMetadata(dto);
 
-            // Assert
+            
             var conflict = Assert.IsType<ConflictObjectResult>(result);
             Assert.NotNull(conflict.Value);
-            // optional: assert the message/key is present
+          
             var objString = conflict.Value.ToString() ?? string.Empty;
             Assert.Contains("already exists", objString, StringComparison.OrdinalIgnoreCase);
         }
 
 
-        // ------------------- UPDATE -------------------
         [Fact]
         public async Task Update_Existing_ReturnsOk()
         {
@@ -189,7 +186,7 @@ namespace HireHub.API.Tests.Controllers
             Assert.IsType<NotFoundObjectResult>(res);
         }
 
-        // ------------------- DELETE -------------------
+       
         [Fact]
         public async Task Delete_Existing_ReturnsNoContent()
         {
@@ -209,7 +206,7 @@ namespace HireHub.API.Tests.Controllers
             Assert.IsType<NotFoundObjectResult>(res);
         }
 
-        // ------------------- SET DEFAULT -------------------
+
         [Fact]
         public async Task SetDefault_Valid_ReturnsOk()
         {

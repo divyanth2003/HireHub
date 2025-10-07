@@ -1,4 +1,4 @@
-// Services/ResumeService.cs
+
 using AutoMapper;
 using HireHub.API.DTOs;
 using HireHub.API.Exceptions;
@@ -35,7 +35,7 @@ namespace HireHub.API.Services
             _uploadsRoot = Path.Combine(_wwwroot, "Uploads");
         }
 
-        // ------------------- GET -------------------
+  
         public async Task<IEnumerable<ResumeDto>> GetAllAsync()
         {
             var resumes = await _resumeRepository.GetAllAsync();
@@ -64,10 +64,9 @@ namespace HireHub.API.Services
             return _mapper.Map<ResumeDto>(resume);
         }
 
-        // ------------------- CREATE -------------------
         public async Task<ResumeDto> CreateAsync(CreateResumeDto dto)
         {
-            // duplicate check
+           
             if (await _resumeRepository.ExistsByNameAsync(dto.JobSeekerId, dto.ResumeName))
                 throw new DuplicateEmailException($"Resume '{dto.ResumeName}' already exists for this JobSeeker.");
 
@@ -82,7 +81,7 @@ namespace HireHub.API.Services
             return _mapper.Map<ResumeDto>(created);
         }
 
-        // ------------------- UPDATE -------------------
+        
         public async Task<ResumeDto?> UpdateAsync(int id, UpdateResumeDto dto)
         {
             var resume = await _resumeRepository.GetByIdAsync(id);
@@ -100,12 +99,12 @@ namespace HireHub.API.Services
             return _mapper.Map<ResumeDto>(updated);
         }
 
-        // ------------------- DELETE -------------------
+      
         public async Task<bool> DeleteAsync(int id)
         {
             _logger.LogInformation("Deleting resume {ResumeId}", id);
 
-            // fetch full entity so we can know FilePath and JobSeekerId etc
+           
             var resume = await _resumeRepository.GetByIdAsync(id);
             if (resume == null)
             {
@@ -113,19 +112,12 @@ namespace HireHub.API.Services
                 throw new NotFoundException($"Resume with id '{id}' not found.");
             }
 
-            // OPTIONAL: fast fail if dependent data exists (requires repository method)
-            // if (await _resumeRepository.HasDependentsAsync(id))
-            // {
-            //     _logger.LogWarning("Resume {ResumeId} has dependents, cannot delete", id);
-            //     throw new ConflictException($"Cannot delete resume {id}: dependent data exists. Delete dependents first.");
-            // }
-
-            // try remove physical file first (best effort)
+         
             try
             {
                 if (!string.IsNullOrWhiteSpace(resume.FilePath))
                 {
-                    // resume.FilePath stored like "Uploads/xxxx.pdf" - normalize separators
+               
                     var relative = resume.FilePath.Replace('/', Path.DirectorySeparatorChar).TrimStart(Path.DirectorySeparatorChar);
                     var webRoot = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot");
                     var fullPath = Path.Combine(webRoot, relative);
@@ -143,11 +135,11 @@ namespace HireHub.API.Services
             }
             catch (Exception ex)
             {
-                // don't block delete just because file removal failed — log and continue.
+           
                 _logger.LogError(ex, "Failed deleting file for resume {ResumeId}, continuing to remove DB record", id);
             }
 
-            // remove DB record
+           
             try
             {
                 var deleted = await _resumeRepository.DeleteAsync(id);
@@ -161,21 +153,21 @@ namespace HireHub.API.Services
             }
             catch (DbUpdateException dbex)
             {
-                // database-level constraint (foreign key, etc) -> translate to 409 Conflict
+          
                 var inner = dbex.InnerException?.Message ?? dbex.Message;
                 _logger.LogWarning(dbex, "DB delete failed for resume {ResumeId} because of dependent data: {DbMessage}", id, inner);
 
-                // friendlier message for client; DB message is logged
+              
                 throw new ConflictException($"Cannot delete resume {id}: dependent data exists. Delete dependents first.");
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error deleting resume {ResumeId}", id);
-                throw; // let controller map to 500
+                throw; 
             }
         }
 
-        // ------------------- UTILITIES -------------------
+   
         public async Task<bool> SetDefaultAsync(Guid jobSeekerId, int resumeId)
         {
             var resume = await _resumeRepository.GetByIdAsync(resumeId);

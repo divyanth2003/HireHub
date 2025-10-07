@@ -8,7 +8,7 @@ using System.IdentityModel.Tokens.Jwt;
 using HireHub.API.DTOs;
 using HireHub.API.Models;
 using HireHub.API.Repositories.Interfaces;
-using HireHub.API.Exceptions; // NotFoundException, DuplicateEmailException
+using HireHub.API.Exceptions;
 
 namespace HireHub.API.Services
 {
@@ -31,7 +31,7 @@ namespace HireHub.API.Services
             _logger = logger;
         }
 
-        // ------------------- GET -------------------
+ 
         public async Task<IEnumerable<UserDto>> GetAllAsync()
         {
             _logger.LogInformation("Fetching all users");
@@ -66,7 +66,6 @@ namespace HireHub.API.Services
             return _mapper.Map<IEnumerable<UserDto>>(users);
         }
 
-        // ------------------- CREATE -------------------
         public async Task<UserDto> CreateAsync(CreateUserDto dto)
         {
             _logger.LogInformation("Creating user with email {Email}", dto.Email);
@@ -79,7 +78,6 @@ namespace HireHub.API.Services
 
             var user = _mapper.Map<User>(dto);
 
-            // hash password + set system fields
             user.PasswordHash = BCrypt.Net.BCrypt.HashPassword(dto.Password);
             user.CreatedAt = DateTime.UtcNow;
             user.UserId = Guid.NewGuid();
@@ -97,7 +95,7 @@ namespace HireHub.API.Services
             }
         }
 
-        // ------------------- UPDATE -------------------
+       
         public async Task<UserDto> UpdateAsync(Guid id, UpdateUserDto dto)
         {
             _logger.LogInformation("Updating user {UserId}", id);
@@ -124,7 +122,7 @@ namespace HireHub.API.Services
             }
         }
 
-        // ------------------- DELETE -------------------
+    
         public async Task<bool> DeleteAsync(Guid id)
         {
             _logger.LogInformation("Deleting user {UserId}", id);
@@ -140,7 +138,7 @@ namespace HireHub.API.Services
             return true;
         }
 
-        // ------------------- AUTH -------------------
+
         public async Task<AuthResponseDto?> LoginAsync(LoginDto dto)
         {
             _logger.LogInformation("Login attempt for {Email}", dto.Email);

@@ -33,7 +33,7 @@ namespace HireHub.API.Tests.Controllers
             _controller = new JobController(_service);
         }
 
-        // ------------------- GET ALL -------------------
+      
         [Fact]
         public async Task GetAll_WhenCalled_ReturnsOkWithJobs()
         {
@@ -50,7 +50,7 @@ namespace HireHub.API.Tests.Controllers
             Assert.Single(list);
         }
 
-        // ------------------- GET BY ID -------------------
+    
         [Fact]
         public async Task GetById_Existing_ReturnsOk()
         {
@@ -74,7 +74,7 @@ namespace HireHub.API.Tests.Controllers
             await Assert.ThrowsAsync<NotFoundException>(() => _controller.GetById(99));
         }
 
-        // ------------------- GET BY EMPLOYER -------------------
+       
         [Fact]
         public async Task GetByEmployer_Existing_ReturnsOk()
         {
@@ -92,7 +92,6 @@ namespace HireHub.API.Tests.Controllers
             Assert.Single(list);
         }
 
-        // ------------------- SEARCH -------------------
         [Fact]
         public async Task SearchByTitle_ReturnsOkWithResults()
         {
@@ -157,7 +156,7 @@ namespace HireHub.API.Tests.Controllers
             Assert.Equal(dtos, ok.Value);
         }
 
-        // ------------------- CREATE -------------------
+  
         [Fact]
         public async Task Create_ValidDto_ReturnsCreatedAtAction()
         {
@@ -176,7 +175,6 @@ namespace HireHub.API.Tests.Controllers
             Assert.Equal("Developer", val.Title);
         }
 
-        // ------------------- UPDATE -------------------
         [Fact]
         public async Task Update_Existing_ReturnsOk()
         {
@@ -206,7 +204,7 @@ namespace HireHub.API.Tests.Controllers
             await Assert.ThrowsAsync<NotFoundException>(() => _controller.Update(99, dto));
         }
 
-        // ------------------- DELETE -------------------
+       
         [Fact]
         public async Task Delete_Existing_ReturnsNoContent()
         {

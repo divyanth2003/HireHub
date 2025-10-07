@@ -26,7 +26,7 @@ namespace HireHub.API.Services
             _logger = logger;
         }
 
-        // ------------------- GET -------------------
+        
         public async Task<IEnumerable<JobDto>> GetAllAsync()
         {
             _logger.LogInformation("Fetching all jobs");
@@ -81,7 +81,6 @@ namespace HireHub.API.Services
         }
 
 
-        // ------------------- CREATE -------------------
         public async Task<JobDto> CreateAsync(CreateJobDto dto)
         {
             _logger.LogInformation("Creating job {@CreateJobDto}", dto);
@@ -103,7 +102,6 @@ namespace HireHub.API.Services
             }
         }
 
-        // ------------------- UPDATE -------------------
         public async Task<JobDto> UpdateAsync(int id, UpdateJobDto dto)
         {
             _logger.LogInformation("Updating job {JobId}", id);
@@ -130,7 +128,7 @@ namespace HireHub.API.Services
             }
         }
 
-        // ------------------- DELETE -------------------
+    
         public async Task<bool> DeleteAsync(int id)
         {
             _logger.LogInformation("Deleting job {JobId}", id);

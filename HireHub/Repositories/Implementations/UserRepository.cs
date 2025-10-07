@@ -14,7 +14,7 @@ namespace HireHub.API.Repositories.Implementations
             _context = context;
         }
 
-        // ------------------- GET -------------------
+    
         public async Task<User?> GetByEmailAsync(string email)
         {
             return await _context.Users
@@ -60,7 +60,6 @@ namespace HireHub.API.Repositories.Implementations
                 .ToListAsync();
         }
 
-        // ------------------- ADD/UPDATE/DELETE -------------------
         public async Task<User> AddAsync(User user)
         {
             _context.Users.Add(user);
@@ -85,7 +84,6 @@ namespace HireHub.API.Repositories.Implementations
             return true;
         }
 
-        // ------------------- UTILITIES -------------------
         public async Task<bool> ExistsByEmailAsync(string email)
         {
             return await _context.Users.AnyAsync(u => u.Email == email);

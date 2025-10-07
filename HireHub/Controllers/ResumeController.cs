@@ -1,4 +1,4 @@
-// Controllers/ResumeController.cs
+
 using System;
 using System.IO;
 using System.Threading.Tasks;
@@ -26,7 +26,7 @@ namespace HireHub.API.Controllers
             _logger = logger;
         }
 
-        // ------------------- GET -------------------
+  
         [Authorize(Roles = "Admin")]
         [HttpGet]
         public async Task<IActionResult> GetAll()
@@ -60,14 +60,14 @@ namespace HireHub.API.Controllers
             return Ok(resume);
         }
 
-        // ------------------- CREATE (multipart/form-data) -------------------
+       
         [Authorize(Roles = "JobSeeker")]
         [HttpPost("upload")]
         [RequestSizeLimit(50_000_000)]
         [Consumes("multipart/form-data")]
         public async Task<IActionResult> CreateFromForm([FromForm] ResumeUploadFormDto form)
         {
-            // Validate required fields
+            
             if (form.JobSeekerId == Guid.Empty) return BadRequest(new { message = "Invalid jobSeekerId" });
             if (string.IsNullOrWhiteSpace(form.ResumeName)) return BadRequest(new { message = "resumeName is required" });
 
@@ -122,7 +122,7 @@ namespace HireHub.API.Controllers
             }
         }
 
-        // ------------------- CREATE (JSON metadata-only) -------------------
+      
         [Authorize(Roles = "JobSeeker")]
         [HttpPost("metadata")]
         public async Task<IActionResult> CreateMetadata([FromBody] CreateResumeDto dto)
@@ -144,7 +144,7 @@ namespace HireHub.API.Controllers
             }
         }
 
-        // ------------------- UPDATE -------------------
+      
         [Authorize(Roles = "JobSeeker")]
         [HttpPut("{id:int}")]
         public async Task<IActionResult> Update(int id, [FromBody] UpdateResumeDto dto)
@@ -167,7 +167,7 @@ namespace HireHub.API.Controllers
             }
         }
 
-        // ------------------- DELETE -------------------
+        
         [Authorize(Roles = "JobSeeker")]
         [HttpDelete("{id:int}")]
         public async Task<IActionResult> Delete(int id)
@@ -195,7 +195,7 @@ namespace HireHub.API.Controllers
         }
 
 
-        // ------------------- UTILITIES -------------------
+       
         [Authorize(Roles = "JobSeeker")]
         [HttpPost("jobseeker/{jobSeekerId:guid}/set-default/{resumeId:int}")]
         public async Task<IActionResult> SetDefault(Guid jobSeekerId, int resumeId)

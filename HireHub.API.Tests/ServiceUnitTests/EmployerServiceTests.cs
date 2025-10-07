@@ -36,17 +36,17 @@ namespace HireHub.API.Tests.Services
         [Fact]
         public async Task GetAllAsync_WhenCalled_ReturnsMappedDtos()
         {
-            // Arrange
+           
             var employers = new List<Employer> { new Employer { EmployerId = Guid.NewGuid(), CompanyName = "A" } };
             var dtos = new List<EmployerDto> { new EmployerDto { EmployerId = employers[0].EmployerId, CompanyName = "A" } };
 
             _repoMock.Setup(r => r.GetAllAsync()).ReturnsAsync(employers);
             _mapperMock.Setup(m => m.Map<IEnumerable<EmployerDto>>(employers)).Returns(dtos);
 
-            // Act
+           
             var result = await _service.GetAllAsync();
 
-            // Assert
+        
             Assert.NotNull(result);
             Assert.Single(result);
         }
@@ -54,7 +54,7 @@ namespace HireHub.API.Tests.Services
         [Fact]
         public async Task GetByIdAsync_ExistingId_ReturnsMappedDto()
         {
-            // Arrange
+            
             var id = Guid.NewGuid();
             var employer = new Employer { EmployerId = id, CompanyName = "X" };
             var dto = new EmployerDto { EmployerId = id, CompanyName = "X" };
@@ -62,10 +62,10 @@ namespace HireHub.API.Tests.Services
             _repoMock.Setup(r => r.GetByIdAsync(id)).ReturnsAsync(employer);
             _mapperMock.Setup(m => m.Map<EmployerDto>(employer)).Returns(dto);
 
-            // Act
+            
             var result = await _service.GetByIdAsync(id);
 
-            // Assert
+            
             Assert.NotNull(result);
             Assert.Equal(dto.CompanyName, result.CompanyName);
         }
@@ -84,7 +84,6 @@ namespace HireHub.API.Tests.Services
         [Fact]
         public async Task GetByUserIdAsync_ExistingUser_ReturnsMappedDto()
         {
-            // Arrange
             var userId = Guid.NewGuid();
             var employer = new Employer { EmployerId = Guid.NewGuid(), UserId = userId, CompanyName = "Co" };
             var dto = new EmployerDto { EmployerId = employer.EmployerId, CompanyName = "Co" };
@@ -92,10 +91,10 @@ namespace HireHub.API.Tests.Services
             _repoMock.Setup(r => r.GetByUserIdAsync(userId)).ReturnsAsync(employer);
             _mapperMock.Setup(m => m.Map<EmployerDto>(employer)).Returns(dto);
 
-            // Act
+          
             var result = await _service.GetByUserIdAsync(userId);
 
-            // Assert
+           
             Assert.NotNull(result);
             Assert.Equal("Co", result.CompanyName);
         }
@@ -153,7 +152,7 @@ namespace HireHub.API.Tests.Services
         [Fact]
         public async Task CreateAsync_ValidDto_ReturnsCreatedDto()
         {
-            // Arrange
+            
             var dto = new CreateEmployerDto { CompanyName = "NewCo", UserId = Guid.NewGuid(), ContactInfo = "c" };
             var mapped = new Employer { EmployerId = Guid.NewGuid(), CompanyName = dto.CompanyName, UserId = dto.UserId };
             var created = new Employer { EmployerId = mapped.EmployerId, CompanyName = mapped.CompanyName, UserId = mapped.UserId };
@@ -163,10 +162,10 @@ namespace HireHub.API.Tests.Services
             _repoMock.Setup(r => r.AddAsync(It.IsAny<Employer>())).ReturnsAsync(created);
             _mapperMock.Setup(m => m.Map<EmployerDto>(created)).Returns(returnedDto);
 
-            // Act
+          
             var result = await _service.CreateAsync(dto);
 
-            // Assert
+         
             Assert.NotNull(result);
             Assert.Equal(returnedDto.CompanyName, result.CompanyName);
         }
@@ -174,7 +173,7 @@ namespace HireHub.API.Tests.Services
         [Fact]
         public async Task UpdateAsync_Existing_ReturnsUpdatedDto()
         {
-            // Arrange
+            
             var id = Guid.NewGuid();
             var dto = new UpdateEmployerDto { CompanyName = "UpdCo", ContactInfo = "u" };
             var existing = new Employer { EmployerId = id, CompanyName = "Old" };
@@ -186,10 +185,10 @@ namespace HireHub.API.Tests.Services
             _repoMock.Setup(r => r.UpdateAsync(existing)).ReturnsAsync(updated);
             _mapperMock.Setup(m => m.Map<EmployerDto>(updated)).Returns(returnedDto);
 
-            // Act
+          
             var result = await _service.UpdateAsync(id, dto);
 
-            // Assert
+            
             Assert.NotNull(result);
             Assert.Equal("UpdCo", result.CompanyName);
         }

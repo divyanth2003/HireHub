@@ -21,7 +21,7 @@ namespace HireHub.API.Controllers
             _notificationService = notificationService;
         }
 
-        // ------------------- GET -------------------
+      
         [Authorize(Roles = "Employer,JobSeeker,Admin")]
         [HttpGet("user/{userId:guid}")]
         public async Task<IActionResult> GetByUser(Guid userId)
@@ -82,7 +82,7 @@ namespace HireHub.API.Controllers
         }
 
 
-        // ------------------- CREATE -------------------
+      
         [Authorize(Roles = "Admin")]
         [HttpPost]
         public async Task<IActionResult> Create([FromBody] CreateNotificationDto dto)
@@ -93,7 +93,7 @@ namespace HireHub.API.Controllers
             return CreatedAtAction(nameof(GetById), new { id = created.NotificationId }, created);
         }
 
-        // ------------------- UPDATE -------------------
+        
         [Authorize(Roles = "Employer,JobSeeker,Admin")]
         [HttpPut("{id:int}")]
         public async Task<IActionResult> Update(int id, [FromBody] UpdateNotificationDto dto)
@@ -121,7 +121,6 @@ namespace HireHub.API.Controllers
             return Ok(new { Updated = count });
         }
 
-        // ------------------- DELETE -------------------
         [Authorize(Roles = "Admin,JobSeeker,Employer")]
         [HttpDelete("{id:int}")]
         public async Task<IActionResult> Delete(int id)

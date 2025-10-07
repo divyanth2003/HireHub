@@ -19,7 +19,7 @@ namespace HireHub.API.Controllers
             _userService = userService;
         }
 
-        // ------------------- AUTH -------------------
+        
         [HttpPost("register")]
         [AllowAnonymous]
         public async Task<IActionResult> Register([FromBody] CreateUserDto dto)
@@ -42,7 +42,7 @@ namespace HireHub.API.Controllers
             return Ok(auth);
         }
 
-        // ------------------- GET -------------------
+       
         [Authorize(Roles = "Admin")]
         [HttpGet]
         public async Task<IActionResult> GetAll()
@@ -75,7 +75,7 @@ namespace HireHub.API.Controllers
             return Ok(users);
         }
 
-        // ------------------- UPDATE -------------------
+       
         [Authorize(Roles = "Admin,Employer,JobSeeker")]
         [HttpPut("{id:guid}")]
         public async Task<IActionResult> Update(Guid id, [FromBody] UpdateUserDto dto)
@@ -86,7 +86,7 @@ namespace HireHub.API.Controllers
             return Ok(updated);
         }
 
-        // ------------------- DELETE -------------------
+       
         [Authorize(Roles = "Admin,Employer,JobSeeker")]
         [HttpDelete("{id:guid}")]
         public async Task<IActionResult> Delete(Guid id)

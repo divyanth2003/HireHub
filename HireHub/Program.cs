@@ -1,4 +1,4 @@
-// Program.cs
+
 using HireHub.API.Mappings;
 using HireHub.API.Middleware;
 using HireHub.API.Repositories.Implementations;
@@ -20,7 +20,7 @@ using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// JWT config
+
 var jwtConfig = builder.Configuration.GetSection("Jwt");
 var key = jwtConfig["Key"] ?? throw new InvalidOperationException("Jwt:Key missing in configuration");
 
@@ -50,10 +50,9 @@ builder.Services.AddAuthentication(options =>
 
 builder.Services.AddAuthorization();
 
-// AutoMapper
+
 builder.Services.AddAutoMapper(typeof(MappingProfile));
 
-// Controllers + Versioning
 builder.Services.AddControllers();
 builder.Services.AddApiVersioning(options =>
 {
@@ -68,16 +67,13 @@ builder.Services.AddVersionedApiExplorer(options =>
     options.SubstituteApiVersionInUrl = true;
 });
 
-// Swagger
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 builder.Services.AddTransient<IConfigureOptions<SwaggerGenOptions>, ConfigureSwaggerOptions>();
 
-// Database
 builder.Services.AddDbContext<HireHubContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("HireHub")));
 
-// CORS
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("DevCorsPolicy", policy =>
@@ -94,7 +90,6 @@ builder.Services.AddCors(options =>
     });
 });
 
-// DI: repositories & services
 builder.Services.AddScoped<IUserRepository, UserRepository>();
 builder.Services.AddScoped<UserService>();
 
@@ -119,13 +114,11 @@ builder.Services.AddScoped<NotificationService>();
 builder.Services.AddScoped<IEmailService, SmtpEmailService>();
 builder.Services.AddScoped<ITokenService, TokenService>();
 
-// Logging
 builder.Logging.ClearProviders();
 builder.Logging.AddLog4Net("log4net.config");
 
 var app = builder.Build();
 
-// Middleware pipeline
 if (app.Environment.IsDevelopment())
 {
     app.UseDeveloperExceptionPage();
@@ -150,5 +143,4 @@ app.UseAuthorization();
 app.MapControllers();
 app.Run();
 
-// allow integration tests to host the app
 public partial class Program { }

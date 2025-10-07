@@ -14,7 +14,7 @@ namespace HireHub.API.Repositories.Implementations
             _context = context;
         }
 
-        // ------------------- GET -------------------
+      
         public async Task<IEnumerable<Employer>> GetAllAsync()
         {
             return await _context.Employers
@@ -58,7 +58,7 @@ namespace HireHub.API.Repositories.Implementations
                 .ToListAsync();
         }
 
-        // ------------------- ADD/UPDATE/DELETE -------------------
+     
         public async Task<Employer> AddAsync(Employer employer)
         {
             _context.Employers.Add(employer);
@@ -83,7 +83,7 @@ namespace HireHub.API.Repositories.Implementations
             return true;
         }
 
-        // ------------------- UTILITIES -------------------
+       
         public async Task<bool> ExistsByCompanyNameAsync(string companyName)
         {
             return await _context.Employers.AnyAsync(e => e.CompanyName == companyName);

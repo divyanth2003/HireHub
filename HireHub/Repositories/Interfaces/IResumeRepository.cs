@@ -1,4 +1,4 @@
-// Repositories/Interfaces/IResumeRepository.cs
+
 using HireHub.API.Models;
 using System;
 using System.Collections.Generic;
@@ -16,7 +16,7 @@ namespace HireHub.API.Repositories.Interfaces
         Task<Resume> AddAsync(Resume resume);
         Task<Resume> UpdateAsync(Resume resume);
         Task<bool> DeleteAsync(int id);
-        // Repositories/Interfaces/IResumeRepository.cs
+      
         Task<bool> HasDependentsAsync(int resumeId);
 
 

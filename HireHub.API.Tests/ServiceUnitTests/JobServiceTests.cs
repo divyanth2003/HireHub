@@ -28,7 +28,7 @@ namespace HireHub.API.Tests.Services
             _service = new JobService(_repoMock.Object, _mapperMock.Object, _loggerMock.Object);
         }
 
-        // ------------------- GET -------------------
+     
         [Fact]
         public async Task GetAllAsync_WhenCalled_ReturnsMappedDtos()
         {
@@ -144,7 +144,7 @@ namespace HireHub.API.Tests.Services
             Assert.Equal("New", res.Title);
         }
 
-        // ------------------- UPDATE -------------------
+
         [Fact]
         public async Task UpdateAsync_Existing_ReturnsUpdatedDto()
         {
@@ -171,7 +171,7 @@ namespace HireHub.API.Tests.Services
             await Assert.ThrowsAsync<NotFoundException>(() => _service.UpdateAsync(9, dto));
         }
 
-        // ------------------- DELETE -------------------
+       
         [Fact]
         public async Task DeleteAsync_Existing_ReturnsTrue()
         {

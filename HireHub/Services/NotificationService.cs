@@ -32,7 +32,7 @@ namespace HireHub.API.Services
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         }
 
-        // ------------------- GET -------------------
+       
         public async Task<IEnumerable<NotificationDto>> GetByUserAsync(Guid userId)
         {
             _logger.LogInformation("Fetching notifications for user {UserId}", userId);
@@ -73,15 +73,14 @@ namespace HireHub.API.Services
             if (app == null)
                 throw new NotFoundException($"Application {dto.ApplicationId} not found.");
 
-            // Ensure Job and Employer.User are loaded
+            
             if (app.Job == null || app.Job.Employer == null || app.Job.Employer.User == null)
                 throw new InvalidOperationException("Application or job/employer relation incomplete.");
 
-            // Verify the logged-in employer owns the job (job.Employer.User.UserId is the employer user)
+            
             if (app.Job.Employer.User.UserId != employerUserId)
                 throw new ForbiddenException("Not authorized to message this applicant.");
 
-            // Create notification for jobseeker's user
             var notif = new Notification
             {
                 UserId = app.JobSeeker.User.UserId,
@@ -93,7 +92,6 @@ namespace HireHub.API.Services
 
             var created = await _notificationRepository.AddAsync(notif);
 
-            // Optionally send email
             if (dto.SendEmail && !string.IsNullOrWhiteSpace(app.JobSeeker.User.Email))
             {
                 string htmlBody = dto.Subject?.Contains("Interview") == true
@@ -121,7 +119,7 @@ namespace HireHub.API.Services
             return _mapper.Map<NotificationDto>(createdWithNav ?? created);
         }
 
-        // ------------------- CREATE -------------------
+
         public async Task<NotificationDto> CreateAsync(CreateNotificationDto dto)
         {
             _logger.LogInformation("Creating notification for user {UserId} (SendEmail={SendEmail})", dto.UserId, dto.SendEmail);
@@ -137,16 +135,16 @@ namespace HireHub.API.Services
             _logger.LogInformation("Notification created {NotificationId} for user {UserId}",
                 created.NotificationId, created.UserId);
 
-            // If caller requested an email be sent, attempt to send it now.
+            
             if (dto.SendEmail)
             {
                 try
                 {
-                    // Get recipient email from navigation property (User). If not present, log and skip.
+                  
                     var recipientEmail = createdWithNav?.User?.Email;
                     if (!string.IsNullOrWhiteSpace(recipientEmail))
                     {
-                        // Use a simple HTML body (escape message). Replace with EmailTemplates.* if you have more context.
+                        
                         var safeMessage = System.Net.WebUtility.HtmlEncode(dto.Message ?? string.Empty).Replace("\n", "<br/>");
                         var htmlBody = $"<p>{safeMessage}</p>";
 
@@ -171,7 +169,7 @@ namespace HireHub.API.Services
                 }
                 catch (Exception ex)
                 {
-                    // Non-blocking: log and continue
+                    
                     _logger.LogError(ex, "Failed to send email for notification {NotificationId}", created.NotificationId);
                 }
             }
@@ -180,7 +178,7 @@ namespace HireHub.API.Services
             return _mapper.Map<NotificationDto>(reloaded);
         }
 
-        // ------------------- UPDATE -------------------
+
         public async Task<NotificationDto?> UpdateAsync(int id, UpdateNotificationDto dto)
         {
             _logger.LogInformation("Updating notification {NotificationId}", id);
@@ -211,7 +209,7 @@ namespace HireHub.API.Services
             return await _notificationRepository.MarkAllAsReadAsync(userId);
         }
 
-        // ------------------- DELETE -------------------
+
         public async Task<bool> DeleteAsync(int id)
         {
             _logger.LogInformation("Deleting notification {NotificationId}", id);

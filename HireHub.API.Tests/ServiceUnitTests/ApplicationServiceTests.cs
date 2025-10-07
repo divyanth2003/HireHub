@@ -28,7 +28,7 @@ namespace HireHub.API.Tests.Services
             _mapperMock = new Mock<IMapper>();
             _loggerMock = new Mock<ILogger<ApplicationService>>();
 
-            // Create mocks for NotificationService constructor dependencies
+           
             var notifRepoMock = new Mock<HireHub.API.Repositories.Interfaces.INotificationRepository>();
             var appRepoMockForNotif = new Mock<HireHub.API.Repositories.Interfaces.IApplicationRepository>();
             var emailMock = new Mock<IEmailService>();
@@ -43,7 +43,7 @@ namespace HireHub.API.Tests.Services
                 notifLoggerMock.Object
             );
 
-            // Create real ApplicationService instance with mocked dependencies
+          
             _sut = new ApplicationService(
                 _repoMock.Object,
                 _mapperMock.Object,
@@ -55,7 +55,7 @@ namespace HireHub.API.Tests.Services
         [Fact]
         public async Task GetAllAsync_ReturnsMappedDtos()
         {
-            // Arrange
+           
             var entities = new List<Application>
             {
                 new Application { ApplicationId = 1, JobId = 1 },
@@ -71,24 +71,23 @@ namespace HireHub.API.Tests.Services
             _repoMock.Setup(r => r.GetAllAsync()).ReturnsAsync(entities);
             _mapperMock.Setup(m => m.Map<IEnumerable<ApplicationDto>>(entities)).Returns(dtos);
 
-            // Act
             var result = await _sut.GetAllAsync();
 
-            // Assert
+   
             result.Should().BeEquivalentTo(dtos);
         }
 
         [Fact]
         public async Task GetByIdAsync_NotFound_ThrowsNotFoundException()
         {
-            // Arrange
+    
             var id = 99;
             _repoMock.Setup(r => r.GetByIdAsync(id)).ReturnsAsync((Application?)null);
 
-            // Act
+          
             Func<Task> act = async () => await _sut.GetByIdAsync(id);
 
-            // Assert
+         
             await act.Should().ThrowAsync<NotFoundException>()
                 .WithMessage($"Application with id '{id}' not found.");
         }
@@ -96,14 +95,14 @@ namespace HireHub.API.Tests.Services
         [Fact]
         public async Task DeleteAsync_NotFound_ThrowsNotFoundException()
         {
-            // Arrange
+           
             var id = 77;
             _repoMock.Setup(r => r.DeleteAsync(id)).ReturnsAsync(false);
 
-            // Act
+            
             Func<Task> act = async () => await _sut.DeleteAsync(id);
 
-            // Assert
+          
             await act.Should().ThrowAsync<NotFoundException>()
                 .WithMessage($"Application with id '{id}' not found.");
         }
@@ -111,23 +110,22 @@ namespace HireHub.API.Tests.Services
         [Fact]
         public async Task DeleteAsync_Existing_ReturnsTrue()
         {
-            // Arrange
+           
             var id = 10;
             _repoMock.Setup(r => r.DeleteAsync(id)).ReturnsAsync(true);
 
-            // Act
+           
             var result = await _sut.DeleteAsync(id);
 
-            // Assert
+           
             result.Should().BeTrue();
         }
 
-        // Add tests for CreateAsync, UpdateAsync, MarkReviewedAsync, GetByJobAsync, etc.
-        // Example for CreateAsync happy path:
+       
         [Fact]
         public async Task CreateAsync_Valid_ReturnsCreatedDto_And_SendsNotification()
         {
-            // Arrange
+           
             var createDto = new CreateApplicationDto { JobId = 5, JobSeekerId = Guid.NewGuid() };
             var entity = new Application { ApplicationId = 101, JobId = 5, JobSeekerId = createDto.JobSeekerId };
             var createdDto = new ApplicationDto { ApplicationId = 101, JobId = 5 };
@@ -137,10 +135,10 @@ namespace HireHub.API.Tests.Services
             _repoMock.Setup(r => r.GetByIdAsync(entity.ApplicationId)).ReturnsAsync(entity);
             _mapperMock.Setup(m => m.Map<ApplicationDto>(entity)).Returns(createdDto);
 
-            // Act
+         
             var res = await _sut.CreateAsync(createDto);
 
-            // Assert
+           
             res.Should().NotBeNull();
             res.ApplicationId.Should().Be(101);
             res.JobId.Should().Be(5);

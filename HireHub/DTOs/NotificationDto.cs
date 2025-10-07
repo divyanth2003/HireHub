@@ -3,7 +3,7 @@ using System.ComponentModel.DataAnnotations;
 
 namespace HireHub.API.DTOs
 {
-    // What you return to clients
+  
     public class NotificationDto
     {
         public int NotificationId { get; set; }
@@ -63,12 +63,12 @@ namespace HireHub.API.DTOs
         public bool SendEmail { get; set; } = true;
     }
 
-    // For marking notification as read, or optional update
+   
     public class UpdateNotificationDto
     {
         public bool IsRead { get; set; }
 
         [MaxLength(300)]
-        public string? Message { get; set; }          // optional edit
+        public string? Message { get; set; }          
     }
 

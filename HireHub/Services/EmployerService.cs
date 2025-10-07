@@ -1,4 +1,4 @@
-﻿// Services/EmployerService.cs
+﻿
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
@@ -27,7 +27,7 @@ namespace HireHub.API.Services
             _logger = logger;
         }
 
-        // ------------------- GET -------------------
+       
         public async Task<IEnumerable<EmployerDto>> GetAllAsync()
         {
             _logger.LogInformation("Fetching all employers");
@@ -78,7 +78,7 @@ namespace HireHub.API.Services
             return _mapper.Map<EmployerDto>(employer);
         }
 
-        // ------------------- CREATE -------------------
+   
         public async Task<EmployerDto> CreateAsync(CreateEmployerDto dto)
         {
             _logger.LogInformation("Creating employer with company {CompanyName}", dto.CompanyName);
@@ -99,7 +99,7 @@ namespace HireHub.API.Services
             }
         }
 
-        // ------------------- UPDATE -------------------
+     
         public async Task<EmployerDto> UpdateAsync(Guid id, UpdateEmployerDto dto)
         {
             _logger.LogInformation("Updating employer {EmployerId}", id);
@@ -126,7 +126,7 @@ namespace HireHub.API.Services
             }
         }
 
-        // ------------------- DELETE -------------------
+       
         public async Task<bool> DeleteAsync(Guid id)
         {
             _logger.LogInformation("Deleting employer {EmployerId}", id);

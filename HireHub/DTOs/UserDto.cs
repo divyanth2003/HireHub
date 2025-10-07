@@ -3,7 +3,7 @@ using System.ComponentModel.DataAnnotations;
 
 namespace HireHub.API.DTOs
 {
-    // ------------------- OUTPUT DTO -------------------
+
     public class UserDto
     {
         public Guid UserId { get; set; }
@@ -22,7 +22,7 @@ namespace HireHub.API.DTOs
         public string Address { get; set; } = string.Empty;
     }
 
-    // ------------------- CREATE DTO -------------------
+
     public class CreateUserDto
     {
         [Required, MaxLength(50)]
@@ -49,7 +49,7 @@ namespace HireHub.API.DTOs
         public string Address { get; set; } = string.Empty;
     }
 
-    // ------------------- UPDATE DTO -------------------
+ 
     public class UpdateUserDto
     {
         [Required, MaxLength(50)]

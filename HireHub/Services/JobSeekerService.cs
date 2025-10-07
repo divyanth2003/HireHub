@@ -26,7 +26,7 @@ namespace HireHub.API.Services
             _logger = logger;
         }
 
-        // ------------------- GET -------------------
+        
         public async Task<IEnumerable<JobSeekerDto>> GetAllAsync()
         {
             _logger.LogInformation("Fetching all jobseekers");
@@ -72,7 +72,7 @@ namespace HireHub.API.Services
             return _mapper.Map<IEnumerable<JobSeekerDto>>(jobSeekers);
         }
 
-        // ------------------- CREATE -------------------
+       
         public async Task<JobSeekerDto> CreateAsync(CreateJobSeekerDto dto)
         {
             _logger.LogInformation("Creating jobseeker for user {UserId}", dto.UserId);
@@ -81,7 +81,7 @@ namespace HireHub.API.Services
             {
                 _logger.LogWarning("Duplicate JobSeeker creation attempted for user {UserId}", dto.UserId);
                 throw new DuplicateEmailException($"A JobSeeker profile already exists for user '{dto.UserId}'.");
-                // Consider renaming this exception to DuplicateEntityException
+              
             }
 
             var jobSeeker = _mapper.Map<JobSeeker>(dto);
@@ -100,7 +100,7 @@ namespace HireHub.API.Services
             }
         }
 
-        // ------------------- UPDATE -------------------
+       
         public async Task<JobSeekerDto> UpdateAsync(Guid id, UpdateJobSeekerDto dto)
         {
             _logger.LogInformation("Updating jobseeker {JobSeekerId}", id);
@@ -127,13 +127,12 @@ namespace HireHub.API.Services
             }
         }
 
-        // ------------------- DELETE -------------------
-        // JobSeekerService.cs
+
         public async Task<bool> DeleteAsync(Guid id)
         {
             _logger.LogInformation("Deleting jobseeker {JobSeekerId}", id);
 
-            // check if exists
+            
             var jobSeeker = await _jobSeekerRepository.GetByIdAsync(id);
             if (jobSeeker == null)
             {
@@ -141,7 +140,7 @@ namespace HireHub.API.Services
                 throw new NotFoundException($"JobSeeker with id '{id}' not found.");
             }
 
-            // check dependents
+        
             var hasDeps = await _jobSeekerRepository.HasDependentsAsync(id);
             if (hasDeps)
             {
@@ -149,7 +148,7 @@ namespace HireHub.API.Services
                 throw new ConflictException("Cannot delete profile: dependent data exists (resumes/applications). Please delete them first.");
             }
 
-            // actually delete
+          
             var deleted = await _jobSeekerRepository.DeleteAsync(id);
             if (!deleted)
             {

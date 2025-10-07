@@ -14,7 +14,7 @@ namespace HireHub.API.Repositories.Implementations
             _context = context;
         }
 
-        // ------------------- GET -------------------
+      
         public async Task<IEnumerable<Resume>> GetAllAsync()
         {
             return await _context.Resumes
@@ -49,7 +49,6 @@ namespace HireHub.API.Repositories.Implementations
                 .FirstOrDefaultAsync();
         }
 
-        // ------------------- ADD/UPDATE/DELETE -------------------
         public async Task<Resume> AddAsync(Resume resume)
         {
             _context.Resumes.Add(resume);
@@ -73,18 +72,17 @@ namespace HireHub.API.Repositories.Implementations
             await _context.SaveChangesAsync();
             return true;
         }
-        // Repositories/Implementations/ResumeRepository.cs
+     
         public async Task<bool> HasDependentsAsync(int resumeId)
         {
-            // check Applications table
+            
             return await _context.Applications.AnyAsync(a => a.ResumeId == resumeId);
         }
 
 
-        // ------------------- UTILITIES -------------------
         public async Task SetDefaultAsync(Guid jobSeekerId, int resumeId)
         {
-            // unset all other resumes for this jobseeker
+           
             var resumes = await _context.Resumes
                 .Where(r => r.JobSeekerId == jobSeekerId)
                 .ToListAsync();

@@ -14,7 +14,7 @@ namespace HireHub.API.Repositories.Implementations
             _context = context;
         }
 
-        // ------------------- GET -------------------
+        
         public async Task<IEnumerable<JobSeeker>> GetAllAsync()
         {
             return await _context.JobSeekers
@@ -60,7 +60,6 @@ namespace HireHub.API.Repositories.Implementations
                 .ToListAsync();
         }
 
-        // ------------------- ADD/UPDATE/DELETE -------------------
         public async Task<JobSeeker> AddAsync(JobSeeker jobSeeker)
         {
             _context.JobSeekers.Add(jobSeeker);
@@ -75,25 +74,21 @@ namespace HireHub.API.Repositories.Implementations
             return jobSeeker;
         }
 
-        // JobSeekerRepository.cs (or the repository file you already use)
+       
         public async Task<bool> DeleteAsync(Guid id)
         {
-            // find entity
+            
             var jobSeeker = await _context.JobSeekers.FindAsync(id);
             if (jobSeeker == null) return false;
 
-            // Check dependent tables - adjust DbSet names to match your context
+         
             var hasResumes = await _context.Resumes.AnyAsync(r => r.JobSeekerId == id);
             if (hasResumes) return false;
 
             var hasApplications = await _context.Applications.AnyAsync(a => a.JobSeekerId == id);
             if (hasApplications) return false;
 
-            // add other checks if you have more related entities:
-            // var hasOther = await _context.SomeOtherEntity.AnyAsync(x => x.JobSeekerId == id);
-            // if (hasOther) return false;
 
-            // safe to remove
             _context.JobSeekers.Remove(jobSeeker);
             await _context.SaveChangesAsync();
             return true;
@@ -106,7 +101,6 @@ namespace HireHub.API.Repositories.Implementations
         }
 
 
-        // ------------------- UTILITIES -------------------
         public async Task<bool> ExistsForUserAsync(Guid userId)
         {
             return await _context.JobSeekers.AnyAsync(js => js.UserId == userId);

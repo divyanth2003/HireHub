@@ -48,7 +48,7 @@ namespace HireHub.API.Services
                 msg.Body = builder.ToMessageBody();
 
                 using var client = new SmtpClient();
-                // SecureSocketOptions.Auto lets MailKit pick StartTLS if available
+             
                 var secure = _useSsl ? SecureSocketOptions.StartTls : SecureSocketOptions.None;
                 await client.ConnectAsync(_host, _port, secure);
 

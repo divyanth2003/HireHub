@@ -1,8 +1,8 @@
-// Models/Resume.cs
+
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
-using System.Text.Json.Serialization; // use System.Text.Json explicitly
+using System.Text.Json.Serialization; 
 
 namespace HireHub.API.Models
 {
@@ -27,7 +27,7 @@ namespace HireHub.API.Models
 
         public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
 
-        // Navigation properties that may create cycles — hide from JSON.
+        // Navigation 
         [JsonIgnore]
         public JobSeeker? JobSeeker { get; set; }
 

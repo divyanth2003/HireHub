@@ -1,4 +1,4 @@
-﻿// DTOs/ResumeDtos.cs
+﻿
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using System;
@@ -66,7 +66,6 @@ namespace HireHub.API.DTOs
         public bool IsDefault { get; set; } = false;
     }
 
-    // Single DTO used by the multipart/form-data upload action
     public class ResumeUploadFormDto
     {
         [Required]
@@ -83,7 +82,7 @@ namespace HireHub.API.DTOs
         [FromForm(Name = "parsedSkills")]
         public string? ParsedSkills { get; set; }
 
-        // IMPORTANT: this property name is "file" — frontend must append "file"
+       
         [FromForm(Name = "file")]
         public IFormFile? File { get; set; }
     }

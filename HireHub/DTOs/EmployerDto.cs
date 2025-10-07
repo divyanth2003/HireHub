@@ -48,6 +48,6 @@ namespace HireHub.API.DTOs
         public string? ContactInfo { get; set; }
 
         [MaxLength(100)]
-        public string? Position { get; set; }   // <-- Added
+        public string? Position { get; set; }  
     }
 }

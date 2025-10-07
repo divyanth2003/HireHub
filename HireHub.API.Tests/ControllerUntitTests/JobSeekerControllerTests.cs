@@ -35,7 +35,7 @@ namespace HireHub.API.Tests.Controllers
             _controller = new JobSeekerController(_service, _controllerLoggerMock.Object);
         }
 
-        // GET ALL
+   
         [Fact]
         public async Task GetAll_WhenCalled_ReturnsOkWithList()
         {
@@ -52,7 +52,7 @@ namespace HireHub.API.Tests.Controllers
             Assert.Single(returned);
         }
 
-        // GET BY ID - success
+      
         [Fact]
         public async Task GetById_ExistingId_ReturnsOkWithDto()
         {
@@ -70,7 +70,6 @@ namespace HireHub.API.Tests.Controllers
             Assert.Equal(id, returned.JobSeekerId);
         }
 
-        // GET BY ID - not found -> controller will propagate exception (service throws), so test expects exception
         [Fact]
         public async Task GetById_NonExisting_ThrowsNotFoundException()
         {
@@ -80,7 +79,7 @@ namespace HireHub.API.Tests.Controllers
             await Assert.ThrowsAsync<NotFoundException>(() => _controller.GetById(id));
         }
 
-        // GET BY USERID - success
+      
         [Fact]
         public async Task GetByUserId_Existing_ReturnsOkWithDto()
         {
@@ -107,7 +106,7 @@ namespace HireHub.API.Tests.Controllers
             await Assert.ThrowsAsync<NotFoundException>(() => _controller.GetByUserId(userId));
         }
 
-        // SEARCH BY COLLEGE
+       
         [Fact]
         public async Task SearchByCollege_WhenCalled_ReturnsOkWithResults()
         {
@@ -124,7 +123,7 @@ namespace HireHub.API.Tests.Controllers
             Assert.Equal(dtoList, ok.Value);
         }
 
-        // SEARCH BY SKILL
+       
         [Fact]
         public async Task SearchBySkill_WhenCalled_ReturnsOkWithResults()
         {
@@ -141,7 +140,7 @@ namespace HireHub.API.Tests.Controllers
             Assert.Equal(dtoList, ok.Value);
         }
 
-        // CREATE - success
+       
         [Fact]
         public async Task Create_ValidDto_ReturnsCreatedAtAction()
         {
@@ -161,7 +160,7 @@ namespace HireHub.API.Tests.Controllers
             Assert.Equal(returnedDto.JobSeekerId, val.JobSeekerId);
         }
 
-        // CREATE - duplicate -> service will throw DuplicateEmailException (used for duplicate jobseeker)
+        
         [Fact]
         public async Task Create_DuplicateForUser_ThrowsDuplicateEmailException()
         {
@@ -171,7 +170,7 @@ namespace HireHub.API.Tests.Controllers
             await Assert.ThrowsAsync<DuplicateEmailException>(() => _controller.Create(dto));
         }
 
-        // UPDATE - success
+      
         [Fact]
         public async Task Update_Existing_ReturnsOkWithUpdatedDto()
         {
@@ -192,7 +191,7 @@ namespace HireHub.API.Tests.Controllers
             Assert.Equal("NewCollege", val.College);
         }
 
-        // UPDATE - not found -> service throws NotFoundException
+       
         [Fact]
         public async Task Update_NotFound_ThrowsNotFoundException()
         {
@@ -203,7 +202,7 @@ namespace HireHub.API.Tests.Controllers
             await Assert.ThrowsAsync<NotFoundException>(() => _controller.Update(id, dto));
         }
 
-        // DELETE - success -> controller returns NoContent
+        
         [Fact]
         public async Task Delete_Existing_ReturnsNoContent()
         {
@@ -216,7 +215,7 @@ namespace HireHub.API.Tests.Controllers
             Assert.IsType<NoContentResult>(res);
         }
 
-        // DELETE - not found -> controller catches NotFoundException and returns NotFoundObjectResult
+       
         [Fact]
         public async Task Delete_NotFound_ReturnsNotFoundObjectResult()
         {
@@ -228,7 +227,6 @@ namespace HireHub.API.Tests.Controllers
             Assert.Contains("not found", notFound.Value.ToString(), StringComparison.OrdinalIgnoreCase);
         }
 
-        // DELETE - conflict due to dependents -> returns ConflictObjectResult
         [Fact]
         public async Task Delete_HasDependents_ReturnsConflictObjectResult()
         {

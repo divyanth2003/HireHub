@@ -21,7 +21,7 @@
 
     public static string InterviewScheduled(string candidateName, string jobTitle, string companyName, DateTime interviewAtLocal, string locationOrLink = null)
     {
-        var formatted = interviewAtLocal.ToString("f"); // long date/time in server locale - frontend will convert if needed
+        var formatted = interviewAtLocal.ToString("f"); 
         var placeHtml = string.IsNullOrEmpty(locationOrLink)
             ? ""
             : $"<p><strong>Details:</strong> {locationOrLink}</p>";

@@ -14,9 +14,9 @@ namespace HireHub.API.DTOs
         public decimal? Salary { get; set; }
         public string? SkillsRequired { get; set; }
 
-        public string? AcademicEligibility { get; set; }   // NEW
-        public string? AllowedBatches { get; set; }        // NEW
-        public int? Backlogs { get; set; }                 // NEW
+        public string? AcademicEligibility { get; set; }   
+        public string? AllowedBatches { get; set; }       
+        public int? Backlogs { get; set; }                 
 
         public string Status { get; set; } = "Open";
         public DateTime CreatedAt { get; set; }
@@ -45,12 +45,12 @@ namespace HireHub.API.DTOs
         public string? SkillsRequired { get; set; }
 
         [MaxLength(300)]
-        public string? AcademicEligibility { get; set; }   // NEW
+        public string? AcademicEligibility { get; set; }   
 
         [MaxLength(200)]
-        public string? AllowedBatches { get; set; }        // NEW
+        public string? AllowedBatches { get; set; }        
 
-        public int? Backlogs { get; set; }                 // NEW
+        public int? Backlogs { get; set; }                 
     }
 
     public class UpdateJobDto
@@ -70,13 +70,13 @@ namespace HireHub.API.DTOs
         public string? SkillsRequired { get; set; }
 
         [MaxLength(300)]
-        public string? AcademicEligibility { get; set; }   // NEW
+        public string? AcademicEligibility { get; set; }  
 
         [MaxLength(200)]
-        public string? AllowedBatches { get; set; }        // NEW
+        public string? AllowedBatches { get; set; }        
 
-        public int? Backlogs { get; set; }                 // NEW
-
+        public int? Backlogs { get; set; }               
+        
         [Required]
         public string Status { get; set; } = "Open";
     }

@@ -3,7 +3,7 @@ using HireHub.API.DTOs;
 using HireHub.API.Exceptions;
 using HireHub.API.Models;
 using HireHub.API.Repositories.Interfaces;
-using HireHub.API.Services; // NotificationService lives in the same Services namespace
+using HireHub.API.Services; 
 using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
@@ -16,7 +16,7 @@ namespace HireHub.API.Services
         private readonly IApplicationRepository _applicationRepository;
         private readonly IMapper _mapper;
         private readonly ILogger<ApplicationService> _logger;
-        private readonly NotificationService _notificationService; // injected notification service
+        private readonly NotificationService _notificationService; 
 
         public ApplicationService(
             IApplicationRepository applicationRepository,
@@ -30,7 +30,6 @@ namespace HireHub.API.Services
             _notificationService = notificationService ?? throw new ArgumentNullException(nameof(notificationService));
         }
 
-        // ------------------- GET -------------------
         public async Task<IEnumerable<ApplicationDto>> GetAllAsync()
         {
             var apps = await _applicationRepository.GetAllAsync();
@@ -70,7 +69,6 @@ namespace HireHub.API.Services
             return _mapper.Map<IEnumerable<ApplicationDto>>(apps);
         }
 
-        // ------------------- CREATE -------------------
         public async Task<ApplicationDto> CreateAsync(CreateApplicationDto dto)
         {
             var entity = _mapper.Map<Application>(dto);
@@ -79,10 +77,10 @@ namespace HireHub.API.Services
 
             var created = await _applicationRepository.AddAsync(entity);
 
-            // Try to load created entity with navigation details (Job, Employer, JobSeeker, User)
+            
             var createdWithDetails = await TryGetAppWithDetailsAsync(created.ApplicationId) ?? created;
 
-            // Notify employer (non-blocking)
+           
             try
             {
                 var employerUserId = createdWithDetails?.Job?.Employer?.User?.UserId;
@@ -104,7 +102,6 @@ namespace HireHub.API.Services
             }
             catch (Exception ex)
             {
-                // don't block create if notification fails
                 _logger.LogError(ex, "Failed to create 'application submitted' notification for application {AppId}", created.ApplicationId);
             }
 
@@ -112,25 +109,25 @@ namespace HireHub.API.Services
             return _mapper.Map<ApplicationDto>(createdWithNav);
         }
 
-        // ------------------- UPDATE -------------------
+       
         public async Task<ApplicationDto?> UpdateAsync(int id, UpdateApplicationDto dto)
         {
             var entity = await _applicationRepository.GetByIdAsync(id);
             if (entity == null)
                 throw new NotFoundException($"Application with id '{id}' not found.");
 
-            // keep old status for comparison
+           
             var oldStatus = entity.Status;
 
-            // apply updates to entity
+            
             _mapper.Map(dto, entity);
 
             var updated = await _applicationRepository.UpdateAsync(entity);
 
-            // reload with details to access job/employer/jobseeker navigation
+      
             var updatedWithDetails = await TryGetAppWithDetailsAsync(updated.ApplicationId) ?? updated;
 
-            // compare status change and create notifications appropriately
+            
             try
             {
                 var newStatus = updatedWithDetails?.Status ?? string.Empty;
@@ -155,7 +152,7 @@ namespace HireHub.API.Services
                         else if (newStatus.IndexOf("Interview", StringComparison.OrdinalIgnoreCase) >= 0 ||
                                  newStatus.Equals("Interview Scheduled", StringComparison.OrdinalIgnoreCase))
                         {
-                            // if interview details available (e.g. InterviewDate) include it
+                            
                             var interviewInfo = string.Empty;
                             try
                             {
@@ -167,7 +164,7 @@ namespace HireHub.API.Services
                                         interviewInfo = $" Interview scheduled on {dtVal.Value.ToLocalTime():f}.";
                                 }
                             }
-                            catch { /* ignore reflection issues */ }
+                            catch { }
 
                             subject = $"Interview scheduled for {jobTitle}";
                             message = $"Your interview for {jobTitle} at {employerName} is scheduled.{interviewInfo}";
@@ -178,7 +175,7 @@ namespace HireHub.API.Services
                             message = $"We’re sorry — your application for {jobTitle} at {employerName} was not selected.";
                         }
 
-                        // create notification (may send email if SendEmail handling is enabled)
+                   
                         await _notificationService.CreateAsync(new CreateNotificationDto
                         {
                             UserId = jobSeekerUserId.Value,
@@ -198,7 +195,6 @@ namespace HireHub.API.Services
             return _mapper.Map<ApplicationDto>(updatedWithNav);
         }
 
-        // ------------------- DELETE -------------------
         public async Task<bool> DeleteAsync(int id)
         {
             var deleted = await _applicationRepository.DeleteAsync(id);
@@ -208,7 +204,7 @@ namespace HireHub.API.Services
             return true;
         }
 
-        // ------------------- UTILITIES -------------------
+        
         public async Task<ApplicationDto?> MarkReviewedAsync(int appId, string? notes = null)
         {
             var app = await _applicationRepository.MarkReviewedAsync(appId, notes);
@@ -218,8 +214,7 @@ namespace HireHub.API.Services
             return _mapper.Map<ApplicationDto>(app);
         }
 
-        // Helper to get application with navigation (job, employer, jobseeker, users).
-        // This uses a repository method if present: GetByIdWithDetailsAsync(applicationId)
+       
         private async Task<Application?> TryGetAppWithDetailsAsync(int applicationId)
         {
             try
@@ -233,7 +228,7 @@ namespace HireHub.API.Services
                     return resultProp?.GetValue(task) as Application;
                 }
 
-                // fallback to GetByIdAsync (may or may not include nav props based on repo)
+                
                 return await _applicationRepository.GetByIdAsync(applicationId);
             }
             catch (Exception ex)

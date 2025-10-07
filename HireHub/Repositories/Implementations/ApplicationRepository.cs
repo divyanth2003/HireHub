@@ -14,7 +14,6 @@ namespace HireHub.API.Repositories.Implementations
             _context = context;
         }
 
-        // ------------------- GET -------------------
         public async Task<IEnumerable<Application>> GetAllAsync()
         {
             return await _context.Applications
@@ -63,7 +62,7 @@ namespace HireHub.API.Repositories.Implementations
         }
 
 
-        // ------------------- ADD/UPDATE/DELETE -------------------
+  
         public async Task<Application> AddAsync(Application application)
         {
             _context.Applications.Add(application);
@@ -88,7 +87,6 @@ namespace HireHub.API.Repositories.Implementations
             return true;
         }
 
-        // ------------------- UTILITIES -------------------
         public async Task<IEnumerable<Application>> GetShortlistedByJobAsync(int jobId)
         {
             return await _context.Applications

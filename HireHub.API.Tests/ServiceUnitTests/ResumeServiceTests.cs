@@ -30,7 +30,7 @@ namespace HireHub.API.Tests.Services
             _service = new ResumeService(_repoMock.Object, _mapperMock.Object, _loggerMock.Object);
         }
 
-        // ------------------- GET -------------------
+   
         [Fact]
         public async Task GetAllAsync_WhenCalled_ReturnsDtos()
         {
@@ -102,7 +102,7 @@ namespace HireHub.API.Tests.Services
             Assert.Null(res);
         }
 
-        // ------------------- CREATE -------------------
+
         [Fact]
         public async Task CreateAsync_Valid_ReturnsDto()
         {
@@ -127,7 +127,6 @@ namespace HireHub.API.Tests.Services
             await Assert.ThrowsAsync<DuplicateEmailException>(() => _service.CreateAsync(dto));
         }
 
-        // ------------------- UPDATE -------------------
         [Fact]
         public async Task UpdateAsync_Existing_ReturnsDto()
         {
@@ -154,7 +153,6 @@ namespace HireHub.API.Tests.Services
             await Assert.ThrowsAsync<NotFoundException>(() => _service.UpdateAsync(99, dto));
         }
 
-        // ------------------- DELETE -------------------
         [Fact]
         public async Task DeleteAsync_Existing_ReturnsTrue()
         {
@@ -183,24 +181,24 @@ namespace HireHub.API.Tests.Services
             await Assert.ThrowsAsync<ConflictException>(() => _service.DeleteAsync(5));
         }
 
-        // ------------------- SET DEFAULT -------------------
+ 
         [Fact]
         public async Task SetDefault_Valid_ReturnsTrue()
         {
-            // Arrange
+       
             var jsId = Guid.NewGuid();
             var resumeId = 1;
 
-            // IMPORTANT: The resume returned MUST have the same JobSeekerId as jsId
+            
             var resume = new Resume { ResumeId = resumeId, JobSeekerId = jsId };
 
             _repoMock.Setup(r => r.GetByIdAsync(resumeId)).ReturnsAsync(resume);
             _repoMock.Setup(r => r.SetDefaultAsync(jsId, resumeId)).Returns(Task.CompletedTask);
 
-            // Act
+         
             var res = await _service.SetDefaultAsync(jsId, resumeId);
 
-            // Assert
+           
             Assert.True(res);
             _repoMock.Verify(r => r.SetDefaultAsync(jsId, resumeId), Times.Once);
         }
