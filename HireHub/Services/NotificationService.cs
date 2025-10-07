@@ -66,6 +66,7 @@ namespace HireHub.API.Services
 
             return _mapper.Map<NotificationDto>(notif);
         }
+
         public async Task<NotificationDto> NotifyApplicantByApplicationAsync(EmployerNotifyApplicantDto dto, Guid employerUserId)
         {
             var app = await _applicationRepository.GetByIdWithDetailsAsync(dto.ApplicationId);
@@ -120,12 +121,10 @@ namespace HireHub.API.Services
             return _mapper.Map<NotificationDto>(createdWithNav ?? created);
         }
 
-
-
         // ------------------- CREATE -------------------
         public async Task<NotificationDto> CreateAsync(CreateNotificationDto dto)
         {
-            _logger.LogInformation("Creating notification for user {UserId}", dto.UserId);
+            _logger.LogInformation("Creating notification for user {UserId} (SendEmail={SendEmail})", dto.UserId, dto.SendEmail);
 
             var entity = _mapper.Map<Notification>(dto);
             entity.IsRead = false;
@@ -138,7 +137,47 @@ namespace HireHub.API.Services
             _logger.LogInformation("Notification created {NotificationId} for user {UserId}",
                 created.NotificationId, created.UserId);
 
-            return _mapper.Map<NotificationDto>(createdWithNav);
+            // If caller requested an email be sent, attempt to send it now.
+            if (dto.SendEmail)
+            {
+                try
+                {
+                    // Get recipient email from navigation property (User). If not present, log and skip.
+                    var recipientEmail = createdWithNav?.User?.Email;
+                    if (!string.IsNullOrWhiteSpace(recipientEmail))
+                    {
+                        // Use a simple HTML body (escape message). Replace with EmailTemplates.* if you have more context.
+                        var safeMessage = System.Net.WebUtility.HtmlEncode(dto.Message ?? string.Empty).Replace("\n", "<br/>");
+                        var htmlBody = $"<p>{safeMessage}</p>";
+
+                        var subject = dto.Subject ?? "Notification from HireHub";
+                        var sent = await _emailService.SendAsync(recipientEmail, subject, htmlBody);
+
+                        if (sent)
+                        {
+                            await _notificationRepository.SetSentEmailAsync(created.NotificationId);
+                            _logger.LogInformation("Email sent for notification {NotificationId} to {Email}", created.NotificationId, recipientEmail);
+                            createdWithNav.SentEmail = true;
+                        }
+                        else
+                        {
+                            _logger.LogWarning("Email NOT sent for notification {NotificationId} to {Email}", created.NotificationId, recipientEmail);
+                        }
+                    }
+                    else
+                    {
+                        _logger.LogWarning("No recipient email available for user {UserId} for notification {NotificationId}", dto.UserId, created.NotificationId);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    // Non-blocking: log and continue
+                    _logger.LogError(ex, "Failed to send email for notification {NotificationId}", created.NotificationId);
+                }
+            }
+
+            var reloaded = await _notificationRepository.GetByIdAsync(created.NotificationId) ?? createdWithNav;
+            return _mapper.Map<NotificationDto>(reloaded);
         }
 
         // ------------------- UPDATE -------------------

@@ -1,13 +1,13 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Threading.Tasks;
-using AutoMapper;
-using Microsoft.Extensions.Logging;
+﻿using AutoMapper;
 using HireHub.API.DTOs;
+using HireHub.API.Exceptions;
 using HireHub.API.Models;
 using HireHub.API.Repositories.Interfaces;
-using HireHub.API.Exceptions;
 using HireHub.API.Services; // NotificationService lives in the same Services namespace
+using Microsoft.Extensions.Logging;
+using System;
+using System.Collections.Generic;
+using System.Threading.Tasks;
 
 namespace HireHub.API.Services
 {

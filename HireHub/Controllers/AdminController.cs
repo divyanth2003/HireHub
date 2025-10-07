@@ -1,4 +1,4 @@
-﻿// Controllers/AdminController.cs
+﻿
 using System;
 using System.Linq;
 using System.Threading.Tasks;
@@ -6,7 +6,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using HireHub.API.Services;
-using HireHub.API.Exceptions; // used for NotFoundException / ConflictException if you have them
+using HireHub.API.Exceptions; 
 
 namespace HireHub.API.Controllers
 {
@@ -33,7 +33,7 @@ namespace HireHub.API.Controllers
             _logger = logger;
         }
 
-        // GET: api/v1/admin/stats
+       
         [HttpGet("stats")]
         public async Task<IActionResult> GetStats()
         {
@@ -57,7 +57,7 @@ namespace HireHub.API.Controllers
             }
         }
 
-        // GET: api/v1/admin/users
+     
         [HttpGet("users")]
         public async Task<IActionResult> GetUsers()
         {
@@ -73,7 +73,7 @@ namespace HireHub.API.Controllers
             }
         }
 
-        // DELETE: api/v1/admin/users/{id}
+    
         [HttpDelete("users/{id:guid}")]
         public async Task<IActionResult> DeleteUser(Guid id)
         {
@@ -94,7 +94,7 @@ namespace HireHub.API.Controllers
             }
         }
 
-        // GET: api/v1/admin/jobs
+    
         [HttpGet("jobs")]
         public async Task<IActionResult> GetJobs()
         {
@@ -110,7 +110,7 @@ namespace HireHub.API.Controllers
             }
         }
 
-        // DELETE: api/v1/admin/jobs/{id}
+     
         [HttpDelete("jobs/{id:int}")]
         public async Task<IActionResult> DeleteJob(int id)
         {
@@ -131,7 +131,7 @@ namespace HireHub.API.Controllers
             }
         }
 
-        // GET: api/v1/admin/applications
+ 
         [HttpGet("applications")]
         public async Task<IActionResult> GetApplications()
         {
@@ -146,7 +146,7 @@ namespace HireHub.API.Controllers
                 return StatusCode(500, new { message = "Failed to fetch applications" });
             }
         }
-        // GET api/v1/admin/users/{id}
+
         [HttpGet("users/{id:guid}")]
         public async Task<IActionResult> GetUser(Guid id)
         {
@@ -163,7 +163,7 @@ namespace HireHub.API.Controllers
             }
         }
 
-        // DELETE: api/v1/admin/applications/{id}
+
         [HttpDelete("applications/{id:int}")]
         public async Task<IActionResult> DeleteApplication(int id)
         {
@@ -184,13 +184,12 @@ namespace HireHub.API.Controllers
             }
         }
 
-        // ---------------- helpers ----------------
 
         private static async Task<long> TryCountAsyncFromService(object service)
         {
             if (service == null) return 0;
 
-            // 1) If service provides CountAsync(), call it
+           
             var countMethod = service.GetType().GetMethod("CountAsync", Type.EmptyTypes);
             if (countMethod != null)
             {
@@ -202,7 +201,7 @@ namespace HireHub.API.Controllers
                 if (result is int i) return i;
             }
 
-            // 2) Fallback: call GetAllAsync() and count
+          
             var getAllMethod = service.GetType().GetMethod("GetAllAsync", Type.EmptyTypes);
             if (getAllMethod != null)
             {
