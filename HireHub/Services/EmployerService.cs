@@ -83,13 +83,6 @@ namespace HireHub.API.Services
         {
             _logger.LogInformation("Creating employer with company {CompanyName}", dto.CompanyName);
 
-            if (await _employerRepository.ExistsByCompanyNameAsync(dto.CompanyName))
-            {
-                _logger.LogWarning("Duplicate employer creation attempted: {CompanyName}", dto.CompanyName);
-                throw new DuplicateEmailException($"Company '{dto.CompanyName}' already exists.");
-                // you may create a custom DuplicateCompanyException instead
-            }
-
             var employer = _mapper.Map<Employer>(dto);
             employer.EmployerId = Guid.NewGuid();
 

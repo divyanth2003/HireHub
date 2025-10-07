@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Threading.Tasks;
 using System.Security.Claims;
 using HireHub.API.DTOs;
@@ -68,6 +68,20 @@ namespace HireHub.API.Controllers
             return CreatedAtAction(nameof(GetById), new { id = notif.NotificationId }, notif);
         }
 
+        [AllowAnonymous]
+        [HttpPost("test-email")]
+        public async Task<IActionResult> TestEmail([FromServices] IEmailService emailService)
+        {
+            var success = await emailService.SendAsync(
+                "youremail@example.com",
+                "🎉 HireHub Email Test",
+                "<h2>SMTP test successful!</h2><p>This means your HireHub email system is working fine 🚀</p>"
+            );
+
+            return Ok(new { success });
+        }
+
+
         // ------------------- CREATE -------------------
         [Authorize(Roles = "Admin")]
         [HttpPost]
@@ -108,7 +122,7 @@ namespace HireHub.API.Controllers
         }
 
         // ------------------- DELETE -------------------
-        [Authorize(Roles = "Admin")]
+        [Authorize(Roles = "Admin,JobSeeker,Employer")]
         [HttpDelete("{id:int}")]
         public async Task<IActionResult> Delete(int id)
         {

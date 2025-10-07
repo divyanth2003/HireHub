@@ -1,4 +1,5 @@
-﻿using System;
+﻿// Tests/Unit/EmployerServiceTests.cs
+using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using AutoMapper;
@@ -155,17 +156,28 @@ namespace HireHub.API.Tests.Unit
                 .WithMessage($"Employer for job id '{jobId}' not found.");
         }
 
+        // --- Changed test: service no longer throws on duplicate company names ---
         [Fact]
-        public async Task CreateAsync_ShouldThrowDuplicate_WhenCompanyExists()
+        public async Task CreateAsync_ShouldCreate_WhenCompanyExistsFlagTrue()
         {
-            var dto = new CreateEmployerDto { CompanyName = "DupCo", UserId = Guid.NewGuid() };
+            var dtoIn = new CreateEmployerDto { CompanyName = "DupCo", UserId = Guid.NewGuid() };
 
-            _repoMock.Setup(r => r.ExistsByCompanyNameAsync(dto.CompanyName)).ReturnsAsync(true);
+            var entity = new Employer { CompanyName = dtoIn.CompanyName, UserId = dtoIn.UserId };
+            var createdEntity = new Employer { EmployerId = Guid.NewGuid(), CompanyName = dtoIn.CompanyName, UserId = dtoIn.UserId };
+            var returnedDto = new EmployerDto { EmployerId = createdEntity.EmployerId, CompanyName = createdEntity.CompanyName };
 
-            var act = async () => await _sut.CreateAsync(dto);
+            // repo might report company exists — service no longer blocks creation,
+            // so we still ensure AddAsync is called and mapping works.
+            _repoMock.Setup(r => r.ExistsByCompanyNameAsync(dtoIn.CompanyName)).ReturnsAsync(true);
+            _mapperMock.Setup(m => m.Map<Employer>(dtoIn)).Returns(entity);
+            _repoMock.Setup(r => r.AddAsync(It.IsAny<Employer>())).ReturnsAsync(createdEntity);
+            _mapperMock.Setup(m => m.Map<EmployerDto>(createdEntity)).Returns(returnedDto);
 
-            await act.Should().ThrowAsync<DuplicateEmailException>() // service used DuplicateEmailException
-                .WithMessage($"Company '{dto.CompanyName}' already exists.");
+            var result = await _sut.CreateAsync(dtoIn);
+
+            result.Should().NotBeNull();
+            result.CompanyName.Should().Be(dtoIn.CompanyName);
+            result.EmployerId.Should().NotBeEmpty();
         }
 
         [Fact]
@@ -177,6 +189,7 @@ namespace HireHub.API.Tests.Unit
             var createdEntity = new Employer { EmployerId = Guid.NewGuid(), CompanyName = dtoIn.CompanyName, UserId = dtoIn.UserId };
             var returnedDto = new EmployerDto { EmployerId = createdEntity.EmployerId, CompanyName = createdEntity.CompanyName };
 
+            // keep Exists check stubbed as false (not required by service but harmless)
             _repoMock.Setup(r => r.ExistsByCompanyNameAsync(dtoIn.CompanyName)).ReturnsAsync(false);
             _mapperMock.Setup(m => m.Map<Employer>(dtoIn)).Returns(entity);
             _repoMock.Setup(r => r.AddAsync(It.IsAny<Employer>())).ReturnsAsync(createdEntity);
@@ -186,9 +199,8 @@ namespace HireHub.API.Tests.Unit
 
             result.Should().NotBeNull();
             result.CompanyName.Should().Be(dtoIn.CompanyName);
-            result.EmployerId.Should().NotBeEmpty();   // ✅ only check not empty
+            result.EmployerId.Should().NotBeEmpty();
         }
-
 
         [Fact]
         public async Task UpdateAsync_ShouldThrowNotFound_WhenMissing()

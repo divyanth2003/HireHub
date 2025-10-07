@@ -95,11 +95,23 @@ namespace HireHub.API.Services
             // Optionally send email
             if (dto.SendEmail && !string.IsNullOrWhiteSpace(app.JobSeeker.User.Email))
             {
+                string htmlBody = dto.Subject?.Contains("Interview") == true
+                    ? EmailTemplates.InterviewScheduled(
+                        app.JobSeeker.User.FullName ?? "Candidate",
+                        app.Job.Title ?? "your role",
+                        app.Job.Employer.CompanyName ?? "the employer",
+                        DateTime.Now.AddDays(1)) // or actual interview date
+                    : EmailTemplates.Shortlisted(
+                        app.JobSeeker.User.FullName ?? "Candidate",
+                        app.Job.Title ?? "your role",
+                        app.Job.Employer.CompanyName ?? "the employer");
+
                 var sent = await _emailService.SendAsync(
                     app.JobSeeker.User.Email,
                     dto.Subject ?? "Message from employer",
-                    dto.Message
+                    htmlBody
                 );
+
                 if (sent)
                     await _notificationRepository.SetSentEmailAsync(created.NotificationId);
             }

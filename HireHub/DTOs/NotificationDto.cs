@@ -12,7 +12,7 @@ namespace HireHub.API.DTOs
         public string? Subject { get; set; }
         public bool IsRead { get; set; }
         public bool SentEmail { get; set; }
-        public DateTime CreatedAt { get; set; }
+        public DateTimeOffset CreatedAt { get; set; }
 
         public string UserEmail { get; set; } = string.Empty;
     }

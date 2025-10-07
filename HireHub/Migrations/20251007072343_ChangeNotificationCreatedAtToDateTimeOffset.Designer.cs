@@ -4,6 +4,7 @@ using HireHub.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace HireHub.Migrations
 {
     [DbContext(typeof(HireHubContext))]
-    partial class HireHubContextModelSnapshot : ModelSnapshot
+    [Migration("20251007072343_ChangeNotificationCreatedAtToDateTimeOffset")]
+    partial class ChangeNotificationCreatedAtToDateTimeOffset
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
