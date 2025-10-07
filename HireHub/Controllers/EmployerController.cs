@@ -19,7 +19,7 @@ namespace HireHub.API.Controllers
             _employerService = employerService;
         }
 
-        // ------------------- GET -------------------
+
        [Authorize(Roles = "Admin")]
         [HttpGet]
         public async Task<IActionResult> GetAll()
@@ -44,7 +44,7 @@ namespace HireHub.API.Controllers
             return Ok(employer);
         }
 
-        [AllowAnonymous] // JobSeekers should be able to search companies
+        [AllowAnonymous] 
         [HttpGet("search")]
         public async Task<IActionResult> SearchByCompany([FromQuery] string company)
         {
@@ -52,7 +52,7 @@ namespace HireHub.API.Controllers
             return Ok(employers);
         }
 
-        [AllowAnonymous] // JobSeekers can view employer from a job
+        [AllowAnonymous] 
         [HttpGet("by-job/{jobId:int}")]
         public async Task<IActionResult> GetByJobId(int jobId)
         {
@@ -60,7 +60,6 @@ namespace HireHub.API.Controllers
             return Ok(employer);
         }
 
-        // ------------------- CREATE -------------------
        [Authorize(Roles = "Admin,Employer")]
         [HttpPost]
         public async Task<IActionResult> Create([FromBody] CreateEmployerDto dto)
@@ -71,7 +70,7 @@ namespace HireHub.API.Controllers
             return CreatedAtAction(nameof(GetById), new { id = created.EmployerId }, created);
         }
 
-        // ------------------- UPDATE -------------------
+      
       [Authorize(Roles = "Admin,Employer")]
         [HttpPut("{id:guid}")]
         public async Task<IActionResult> Update(Guid id, [FromBody] UpdateEmployerDto dto)
@@ -82,7 +81,7 @@ namespace HireHub.API.Controllers
             return Ok(updated);
         }
 
-        // ------------------- DELETE -------------------
+   
        [Authorize(Roles = "Admin,Employer")]
         [HttpDelete("{id:guid}")]
         public async Task<IActionResult> Delete(Guid id)

@@ -19,8 +19,8 @@ namespace HireHub.API.Controllers
             _jobService = jobService;
         }
 
-        // ------------------- GET -------------------
-        [AllowAnonymous] // Job seekers can browse jobs without login if you want
+       
+        [AllowAnonymous] 
         [HttpGet]
         public async Task<IActionResult> GetAll()
         {
@@ -44,7 +44,7 @@ namespace HireHub.API.Controllers
             return Ok(jobs);
         }
 
-        // ------------------- SEARCH -------------------
+      
         [AllowAnonymous]
         [HttpGet("search/title")]
         public async Task<IActionResult> SearchByTitle([FromQuery] string query)
@@ -77,7 +77,6 @@ namespace HireHub.API.Controllers
         }
 
 
-        // ------------------- CREATE -------------------
         [Authorize(Roles = "Employer")]
         [HttpPost]
         public async Task<IActionResult> Create([FromBody] CreateJobDto dto)
@@ -88,7 +87,6 @@ namespace HireHub.API.Controllers
             return CreatedAtAction(nameof(GetById), new { id = created.JobId }, created);
         }
 
-        // ------------------- UPDATE -------------------
         [Authorize(Roles = "Employer")]
         [HttpPut("{id:int}")]
         public async Task<IActionResult> Update(int id, [FromBody] UpdateJobDto dto)
@@ -99,7 +97,6 @@ namespace HireHub.API.Controllers
             return Ok(updated);
         }
 
-        // ------------------- DELETE -------------------
         [Authorize(Roles = "Employer,Admin")]
         [HttpDelete("{id:int}")]
         public async Task<IActionResult> Delete(int id)

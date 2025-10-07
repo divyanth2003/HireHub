@@ -19,7 +19,7 @@ namespace HireHub.API.Controllers
             _applicationService = applicationService;
         }
 
-        // ------------------- GET -------------------
+       
         [Authorize(Roles = "Admin")]
         [HttpGet]
         public async Task<IActionResult> GetAll()
@@ -68,7 +68,7 @@ namespace HireHub.API.Controllers
             return Ok(apps);
         }
 
-        // ------------------- CREATE -------------------
+
         [Authorize(Roles = "JobSeeker")]
         [HttpPost]
         public async Task<IActionResult> Create([FromBody] CreateApplicationDto dto)
@@ -79,7 +79,7 @@ namespace HireHub.API.Controllers
             return CreatedAtAction(nameof(GetById), new { id = created.ApplicationId }, created);
         }
 
-        // ------------------- UPDATE -------------------
+      
         [Authorize(Roles = "Employer,Admin")]
         [HttpPut("{id:int}")]
         public async Task<IActionResult> Update(int id, [FromBody] UpdateApplicationDto dto)
@@ -90,7 +90,7 @@ namespace HireHub.API.Controllers
             return Ok(updated);
         }
 
-        // ------------------- DELETE -------------------
+
         [Authorize(Roles = "JobSeeker,Admin")]
         [HttpDelete("{id:int}")]
         public async Task<IActionResult> Delete(int id)
@@ -99,7 +99,7 @@ namespace HireHub.API.Controllers
             return NoContent();
         }
 
-        // ------------------- UTILITIES -------------------
+    
         [Authorize(Roles = "Employer,Admin")]
         [HttpPost("{appId:int}/review")]
         public async Task<IActionResult> MarkReviewed(int appId, [FromBody] string? notes)

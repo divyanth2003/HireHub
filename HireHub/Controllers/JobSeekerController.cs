@@ -1,4 +1,4 @@
-// Controllers/JobSeekerController.cs
+
 using System;
 using System.Threading.Tasks;
 using HireHub.API.DTOs;
@@ -24,7 +24,6 @@ namespace HireHub.API.Controllers
             _logger = logger;
         }
 
-        // ------------------- ADMIN -------------------
         [Authorize(Roles = "Admin")]
         [HttpGet]
         public async Task<IActionResult> GetAll()
@@ -41,8 +40,7 @@ namespace HireHub.API.Controllers
             return Ok(jobSeeker);
         }
 
-        // ------------------- BY USER -------------------
-        // Allows Admin or the JobSeeker user (or Employer if you permit) to fetch their profile.
+        
         [Authorize(Roles = "Admin,JobSeeker")]
         [HttpGet("by-user/{userId:guid}")]
         public async Task<IActionResult> GetByUserId(Guid userId)
@@ -51,8 +49,6 @@ namespace HireHub.API.Controllers
             return Ok(jobSeeker);
         }
 
-        // ------------------- SEARCH (public / authorized) -------------------
-        // Let employers and jobseekers search — make it public if you want anonymous access.
         [AllowAnonymous]
         [HttpGet("search/college")]
         public async Task<IActionResult> SearchByCollege([FromQuery] string name)
@@ -69,8 +65,7 @@ namespace HireHub.API.Controllers
             return Ok(results);
         }
 
-        // ------------------- CREATE / UPDATE / DELETE -------------------
-        // Create a JobSeeker profile (only the JobSeeker user or Admin should create)
+       
         [Authorize(Roles = "Admin,JobSeeker")]
         [HttpPost]
         public async Task<IActionResult> Create([FromBody] CreateJobSeekerDto dto)
@@ -81,7 +76,7 @@ namespace HireHub.API.Controllers
             return CreatedAtAction(nameof(GetById), new { id = created.JobSeekerId }, created);
         }
 
-        // Update profile (Admin or the owning JobSeeker)
+        
         [Authorize(Roles = "Admin,JobSeeker")]
         [HttpPut("{id:guid}")]
         public async Task<IActionResult> Update(Guid id, [FromBody] UpdateJobSeekerDto dto)
@@ -92,7 +87,7 @@ namespace HireHub.API.Controllers
             return Ok(updated);
         }
 
-        // Delete profile (Admin or owning JobSeeker)
+      
         [Authorize(Roles = "Admin,JobSeeker")]
         [HttpDelete("{id:guid}")]
         public async Task<IActionResult> Delete(Guid id)
@@ -104,12 +99,12 @@ namespace HireHub.API.Controllers
             }
             catch (NotFoundException nf)
             {
-                // repository/service told us the resource doesn't exist
+                
                 return NotFound(new { message = nf.Message });
             }
             catch (ConflictException cf)
             {
-                // delete blocked by dependent data (resumes/applications/etc.)
+                
                 return Conflict(new { message = cf.Message });
             }
             catch (Exception ex)
