@@ -61,8 +61,13 @@ namespace HireHub.API.Repositories.Implementations
                 .FirstOrDefaultAsync();
         }
 
+        public async Task<Application?> GetByJobAndJobSeekerAsync(int jobId, Guid jobSeekerId)
+        {
+            return await _context.Applications
+                .FirstOrDefaultAsync(a => a.JobId == jobId && a.JobSeekerId == jobSeekerId);
+        }
 
-  
+
         public async Task<Application> AddAsync(Application application)
         {
             _context.Applications.Add(application);

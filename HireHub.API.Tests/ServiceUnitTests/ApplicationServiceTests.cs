@@ -28,7 +28,6 @@ namespace HireHub.API.Tests.Services
             _mapperMock = new Mock<IMapper>();
             _loggerMock = new Mock<ILogger<ApplicationService>>();
 
-           
             var notifRepoMock = new Mock<HireHub.API.Repositories.Interfaces.INotificationRepository>();
             var appRepoMockForNotif = new Mock<HireHub.API.Repositories.Interfaces.IApplicationRepository>();
             var emailMock = new Mock<IEmailService>();
@@ -43,19 +42,17 @@ namespace HireHub.API.Tests.Services
                 notifLoggerMock.Object
             );
 
-          
             _sut = new ApplicationService(
-                _repoMock.Object,
-                _mapperMock.Object,
-                _loggerMock.Object,
-                _notificationServiceMock.Object
-            );
+                    _repoMock.Object,
+                    _mapperMock.Object,
+                     _loggerMock.Object,
+                     _notificationServiceMock.Object 
+                );
         }
 
         [Fact]
         public async Task GetAllAsync_ReturnsMappedDtos()
         {
-           
             var entities = new List<Application>
             {
                 new Application { ApplicationId = 1, JobId = 1 },
@@ -73,21 +70,17 @@ namespace HireHub.API.Tests.Services
 
             var result = await _sut.GetAllAsync();
 
-   
             result.Should().BeEquivalentTo(dtos);
         }
 
         [Fact]
         public async Task GetByIdAsync_NotFound_ThrowsNotFoundException()
         {
-    
             var id = 99;
             _repoMock.Setup(r => r.GetByIdAsync(id)).ReturnsAsync((Application?)null);
 
-          
             Func<Task> act = async () => await _sut.GetByIdAsync(id);
 
-         
             await act.Should().ThrowAsync<NotFoundException>()
                 .WithMessage($"Application with id '{id}' not found.");
         }
@@ -95,14 +88,11 @@ namespace HireHub.API.Tests.Services
         [Fact]
         public async Task DeleteAsync_NotFound_ThrowsNotFoundException()
         {
-           
             var id = 77;
             _repoMock.Setup(r => r.DeleteAsync(id)).ReturnsAsync(false);
 
-            
             Func<Task> act = async () => await _sut.DeleteAsync(id);
 
-          
             await act.Should().ThrowAsync<NotFoundException>()
                 .WithMessage($"Application with id '{id}' not found.");
         }
@@ -110,38 +100,58 @@ namespace HireHub.API.Tests.Services
         [Fact]
         public async Task DeleteAsync_Existing_ReturnsTrue()
         {
-           
             var id = 10;
             _repoMock.Setup(r => r.DeleteAsync(id)).ReturnsAsync(true);
 
-           
             var result = await _sut.DeleteAsync(id);
 
-           
             result.Should().BeTrue();
         }
 
-       
         [Fact]
         public async Task CreateAsync_Valid_ReturnsCreatedDto_And_SendsNotification()
         {
-           
             var createDto = new CreateApplicationDto { JobId = 5, JobSeekerId = Guid.NewGuid() };
             var entity = new Application { ApplicationId = 101, JobId = 5, JobSeekerId = createDto.JobSeekerId };
             var createdDto = new ApplicationDto { ApplicationId = 101, JobId = 5 };
 
+          
+            _repoMock.Setup(r => r.GetByJobAndJobSeekerAsync(createDto.JobId, createDto.JobSeekerId))
+                     .ReturnsAsync((Application?)null);
+
+   
+            _repoMock.Setup(r => r.GetByIdWithDetailsAsync(It.IsAny<int>()))
+                     .ReturnsAsync((Application?)null);
+
             _mapperMock.Setup(m => m.Map<Application>(createDto)).Returns(entity);
             _repoMock.Setup(r => r.AddAsync(It.IsAny<Application>())).ReturnsAsync(entity);
+
             _repoMock.Setup(r => r.GetByIdAsync(entity.ApplicationId)).ReturnsAsync(entity);
+
             _mapperMock.Setup(m => m.Map<ApplicationDto>(entity)).Returns(createdDto);
 
-         
             var res = await _sut.CreateAsync(createDto);
 
-           
             res.Should().NotBeNull();
             res.ApplicationId.Should().Be(101);
             res.JobId.Should().Be(5);
+
+           
+        }
+
+        [Fact]
+        public async Task CreateAsync_Duplicate_ThrowsBadRequestException()
+        {
+            var createDto = new CreateApplicationDto { JobId = 7, JobSeekerId = Guid.NewGuid() };
+            var existing = new Application { ApplicationId = 200, JobId = 7, JobSeekerId = createDto.JobSeekerId };
+
+            _repoMock.Setup(r => r.GetByJobAndJobSeekerAsync(createDto.JobId, createDto.JobSeekerId))
+                     .ReturnsAsync(existing);
+
+            Func<Task> act = async () => await _sut.CreateAsync(createDto);
+
+            await act.Should().ThrowAsync<BadRequestException>()
+                .WithMessage("You have already applied for this job.");
         }
     }
 }

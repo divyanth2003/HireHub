@@ -3,7 +3,7 @@ using HireHub.API.DTOs;
 using HireHub.API.Exceptions;
 using HireHub.API.Models;
 using HireHub.API.Repositories.Interfaces;
-using HireHub.API.Services; 
+using HireHub.API.Services;
 using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
@@ -16,7 +16,7 @@ namespace HireHub.API.Services
         private readonly IApplicationRepository _applicationRepository;
         private readonly IMapper _mapper;
         private readonly ILogger<ApplicationService> _logger;
-        private readonly NotificationService _notificationService; 
+        private readonly NotificationService _notificationService;
 
         public ApplicationService(
             IApplicationRepository applicationRepository,
@@ -41,7 +41,6 @@ namespace HireHub.API.Services
             var app = await _applicationRepository.GetByIdAsync(id);
             if (app == null)
                 throw new NotFoundException($"Application with id '{id}' not found.");
-
             return _mapper.Map<ApplicationDto>(app);
         }
 
@@ -71,16 +70,17 @@ namespace HireHub.API.Services
 
         public async Task<ApplicationDto> CreateAsync(CreateApplicationDto dto)
         {
+            var existing = await _applicationRepository.GetByJobAndJobSeekerAsync(dto.JobId, dto.JobSeekerId);
+            if (existing != null)
+                throw new BadRequestException("You have already applied for this job.");
+
             var entity = _mapper.Map<Application>(dto);
             entity.Status = "Applied";
             entity.AppliedAt = DateTime.UtcNow;
 
             var created = await _applicationRepository.AddAsync(entity);
-
-            
             var createdWithDetails = await TryGetAppWithDetailsAsync(created.ApplicationId) ?? created;
 
-           
             try
             {
                 var employerUserId = createdWithDetails?.Job?.Employer?.User?.UserId;
@@ -102,32 +102,25 @@ namespace HireHub.API.Services
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Failed to create 'application submitted' notification for application {AppId}", created.ApplicationId);
+                _logger.LogError(ex, "Failed to create notification for application {AppId}", created.ApplicationId);
             }
 
             var createdWithNav = await _applicationRepository.GetByIdAsync(created.ApplicationId) ?? created;
             return _mapper.Map<ApplicationDto>(createdWithNav);
         }
 
-       
         public async Task<ApplicationDto?> UpdateAsync(int id, UpdateApplicationDto dto)
         {
             var entity = await _applicationRepository.GetByIdAsync(id);
             if (entity == null)
                 throw new NotFoundException($"Application with id '{id}' not found.");
 
-           
             var oldStatus = entity.Status;
-
-            
             _mapper.Map(dto, entity);
 
             var updated = await _applicationRepository.UpdateAsync(entity);
-
-      
             var updatedWithDetails = await TryGetAppWithDetailsAsync(updated.ApplicationId) ?? updated;
 
-            
             try
             {
                 var newStatus = updatedWithDetails?.Status ?? string.Empty;
@@ -147,13 +140,12 @@ namespace HireHub.API.Services
                         if (newStatus.Equals("Shortlisted", StringComparison.OrdinalIgnoreCase))
                         {
                             subject = $"You are shortlisted for {jobTitle}";
-                            message = $"Congratulations! You have been shortlisted for {jobTitle} at {employerName}. Please check your application for details.";
+                            message = $"Congratulations! You have been shortlisted for {jobTitle} at {employerName}.";
                         }
                         else if (newStatus.IndexOf("Interview", StringComparison.OrdinalIgnoreCase) >= 0 ||
                                  newStatus.Equals("Interview Scheduled", StringComparison.OrdinalIgnoreCase))
                         {
-                            
-                            var interviewInfo = string.Empty;
+                            string interviewInfo = string.Empty;
                             try
                             {
                                 var dtProp = updatedWithDetails.GetType().GetProperty("InterviewDate");
@@ -175,7 +167,6 @@ namespace HireHub.API.Services
                             message = $"We’re sorry — your application for {jobTitle} at {employerName} was not selected.";
                         }
 
-                   
                         await _notificationService.CreateAsync(new CreateNotificationDto
                         {
                             UserId = jobSeekerUserId.Value,
@@ -188,7 +179,7 @@ namespace HireHub.API.Services
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Failed to send notification after application status change for app {AppId}", id);
+                _logger.LogError(ex, "Failed to send notification after status change for app {AppId}", id);
             }
 
             var updatedWithNav = await _applicationRepository.GetByIdAsync(updated.ApplicationId) ?? updated;
@@ -200,21 +191,17 @@ namespace HireHub.API.Services
             var deleted = await _applicationRepository.DeleteAsync(id);
             if (!deleted)
                 throw new NotFoundException($"Application with id '{id}' not found.");
-
             return true;
         }
 
-        
         public async Task<ApplicationDto?> MarkReviewedAsync(int appId, string? notes = null)
         {
             var app = await _applicationRepository.MarkReviewedAsync(appId, notes);
             if (app == null)
                 throw new NotFoundException($"Application with id '{appId}' not found.");
-
             return _mapper.Map<ApplicationDto>(app);
         }
 
-       
         private async Task<Application?> TryGetAppWithDetailsAsync(int applicationId)
         {
             try
@@ -227,13 +214,11 @@ namespace HireHub.API.Services
                     var resultProp = task.GetType().GetProperty("Result");
                     return resultProp?.GetValue(task) as Application;
                 }
-
-                
                 return await _applicationRepository.GetByIdAsync(applicationId);
             }
             catch (Exception ex)
             {
-                _logger.LogWarning(ex, "Could not load application details for {AppId}", applicationId);
+                _logger.LogWarning(ex, "Could not load details for {AppId}", applicationId);
                 return await _applicationRepository.GetByIdAsync(applicationId);
             }
         }
