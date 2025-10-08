@@ -8,7 +8,9 @@ using System.IdentityModel.Tokens.Jwt;
 using HireHub.API.DTOs;
 using HireHub.API.Models;
 using HireHub.API.Repositories.Interfaces;
-using HireHub.API.Exceptions;
+using HireHub.API.Exceptions; 
+using HireHub.API.Utils; 
+using HireHub.API.Services; 
 
 namespace HireHub.API.Services
 {
@@ -19,19 +21,25 @@ namespace HireHub.API.Services
         private readonly IMapper _mapper;
         private readonly ILogger<UserService> _logger;
 
+        private readonly IPasswordResetRepository _passwordResetRepository;
+        private readonly IEmailService _emailService;
+
         public UserService(
             IUserRepository userRepository,
             IMapper mapper,
             ITokenService tokenService,
-            ILogger<UserService> logger)
+            ILogger<UserService> logger,
+            IPasswordResetRepository passwordResetRepository,
+            IEmailService emailService)
         {
             _userRepository = userRepository;
             _tokenService = tokenService;
             _mapper = mapper;
             _logger = logger;
+            _passwordResetRepository = passwordResetRepository;
+            _emailService = emailService;
         }
 
- 
         public async Task<IEnumerable<UserDto>> GetAllAsync()
         {
             _logger.LogInformation("Fetching all users");
@@ -95,7 +103,7 @@ namespace HireHub.API.Services
             }
         }
 
-       
+        
         public async Task<UserDto> UpdateAsync(Guid id, UpdateUserDto dto)
         {
             _logger.LogInformation("Updating user {UserId}", id);
@@ -122,7 +130,7 @@ namespace HireHub.API.Services
             }
         }
 
-    
+     
         public async Task<bool> DeleteAsync(Guid id)
         {
             _logger.LogInformation("Deleting user {UserId}", id);
@@ -138,7 +146,7 @@ namespace HireHub.API.Services
             return true;
         }
 
-
+     
         public async Task<AuthResponseDto?> LoginAsync(LoginDto dto)
         {
             _logger.LogInformation("Login attempt for {Email}", dto.Email);
@@ -169,6 +177,93 @@ namespace HireHub.API.Services
                 Role = user.Role,
                 UserId = user.UserId
             };
+        }
+
+    
+        public async Task RequestPasswordResetAsync(string email, string originBaseUrl)
+        {
+            try
+            {
+                var user = await _userRepository.GetByEmailAsync(email);
+                if (user == null)
+                {
+                    
+                    _logger.LogInformation("Password reset requested for unknown email {Email}", email);
+                    return;
+                }
+
+                var rawToken = TokenUtils.CreateRawTokenBase64Url(32);
+                var tokenHash = TokenUtils.Sha256Hex(rawToken);
+
+                var reset = new PasswordReset
+                {
+                    UserId = user.UserId,
+                    TokenHash = tokenHash,
+                    ExpiresAt = DateTime.UtcNow.AddHours(2),
+                    CreatedAt = DateTime.UtcNow,
+                    Used = false
+                };
+
+                await _passwordResetRepository.AddAsync(reset);
+
+                var link = $"{originBaseUrl.TrimEnd('/')}/reset-password?token={Uri.EscapeDataString(rawToken)}";
+                var body = $"<p>Hi {user.FullName},</p><p>Reset your password by clicking this link:</p><p><a href=\"{link}\">{link}</a></p>"
+                         + "<p>If you didn't request this, you can ignore this email.</p>";
+
+                try
+                {
+                    await _emailService.SendAsync(user.Email, "Reset your password", body);
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogWarning(ex, "Failed to send password reset email to {Email}", user.Email);
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "RequestPasswordResetAsync failed for {Email}", email);
+              
+            }
+        }
+
+        
+        public async Task<bool> ResetPasswordWithTokenAsync(string rawToken, string newPassword)
+        {
+            try
+            {
+                var tokenHash = TokenUtils.Sha256Hex(rawToken);
+                var reset = await _passwordResetRepository.GetByTokenHashAsync(tokenHash);
+                if (reset == null)
+                {
+                    _logger.LogInformation("Password reset attempted with invalid token hash");
+                    return false;
+                }
+
+                if (reset.ExpiresAt < DateTime.UtcNow)
+                {
+                    _logger.LogInformation("Password reset attempted with expired token for UserId {UserId}", reset.UserId);
+                    return false;
+                }
+
+                var user = await _userRepository.GetByIdAsync(reset.UserId);
+                if (user == null)
+                {
+                    _logger.LogWarning("Password reset: user not found for token (UserId {UserId})", reset.UserId);
+                    return false;
+                }
+
+                user.PasswordHash = BCrypt.Net.BCrypt.HashPassword(newPassword);
+                await _userRepository.UpdateAsync(user);
+                await _passwordResetRepository.MarkUsedAsync(reset);
+
+                _logger.LogInformation("Password reset successful for UserId {UserId}", user.UserId);
+                return true;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "ResetPasswordWithTokenAsync failed");
+                return false;
+            }
         }
     }
 }

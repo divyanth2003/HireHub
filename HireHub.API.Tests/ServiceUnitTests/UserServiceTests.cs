@@ -20,6 +20,8 @@ namespace HireHub.API.Tests.Services
         private readonly Mock<ITokenService> _tokenServiceMock;
         private readonly Mock<IMapper> _mapperMock;
         private readonly Mock<ILogger<UserService>> _loggerMock;
+        private readonly Mock<IPasswordResetRepository> _passwordResetRepoMock;
+        private readonly Mock<IEmailService> _emailServiceMock;
         private readonly UserService _service;
 
         public UserServiceTests()
@@ -28,18 +30,23 @@ namespace HireHub.API.Tests.Services
             _tokenServiceMock = new Mock<ITokenService>();
             _mapperMock = new Mock<IMapper>();
             _loggerMock = new Mock<ILogger<UserService>>();
+            _passwordResetRepoMock = new Mock<IPasswordResetRepository>();
+            _emailServiceMock = new Mock<IEmailService>();
 
+            
             _service = new UserService(
                 _userRepoMock.Object,
                 _mapperMock.Object,
                 _tokenServiceMock.Object,
-                _loggerMock.Object);
+                _loggerMock.Object,
+                _passwordResetRepoMock.Object,
+                _emailServiceMock.Object
+            );
         }
 
         [Fact]
         public async Task GetByIdAsync_UserExists_ReturnsUserDto()
         {
-
             var id = Guid.NewGuid();
             var user = new User { UserId = id, Email = "a@b.com", Role = "JobSeeker", PasswordHash = "h" };
             var expectedDto = new UserDto { UserId = id, Email = "a@b.com", Role = "JobSeeker" };
@@ -49,7 +56,6 @@ namespace HireHub.API.Tests.Services
 
             var result = await _service.GetByIdAsync(id);
 
-        
             Assert.NotNull(result);
             Assert.Equal(expectedDto.UserId, result.UserId);
             Assert.Equal(expectedDto.Email, result.Email);
@@ -58,29 +64,33 @@ namespace HireHub.API.Tests.Services
         [Fact]
         public async Task GetByIdAsync_UserNotFound_ThrowsNotFoundException()
         {
-        
             var id = Guid.NewGuid();
             _userRepoMock.Setup(r => r.GetByIdAsync(id)).ReturnsAsync((User?)null);
 
-         
             await Assert.ThrowsAsync<NotFoundException>(() => _service.GetByIdAsync(id));
         }
 
         [Fact]
         public async Task CreateAsync_DuplicateEmail_ThrowsDuplicateEmailException()
         {
-           
-            var dto = new CreateUserDto { Email = "dupe@a.com", Password = "pass123", FullName = "N", Role = "JobSeeker", DateOfBirth = DateOnly.FromDateTime(DateTime.UtcNow.AddYears(-20)), Gender = "M" };
+            var dto = new CreateUserDto
+            {
+                Email = "dupe@a.com",
+                Password = "pass123",
+                FullName = "N",
+                Role = "JobSeeker",
+                DateOfBirth = DateOnly.FromDateTime(DateTime.UtcNow.AddYears(-20)),
+                Gender = "M"
+            };
+
             _userRepoMock.Setup(r => r.ExistsByEmailAsync(dto.Email)).ReturnsAsync(true);
 
-          
             await Assert.ThrowsAsync<DuplicateEmailException>(() => _service.CreateAsync(dto));
         }
 
         [Fact]
         public async Task CreateAsync_ValidDto_ReturnsCreatedUserDto()
         {
-           
             var dto = new CreateUserDto
             {
                 Email = "new@a.com",
@@ -108,15 +118,12 @@ namespace HireHub.API.Tests.Services
             };
 
             _userRepoMock.Setup(r => r.ExistsByEmailAsync(dto.Email)).ReturnsAsync(false);
-           
             _mapperMock.Setup(m => m.Map<User>(dto)).Returns(new User());
             _userRepoMock.Setup(r => r.AddAsync(It.IsAny<User>())).ReturnsAsync(createdUser);
             _mapperMock.Setup(m => m.Map<UserDto>(createdUser)).Returns(createdDto);
 
-           
             var result = await _service.CreateAsync(dto);
 
-            
             Assert.NotNull(result);
             Assert.Equal(createdDto.UserId, result.UserId);
             Assert.Equal(createdDto.Email, result.Email);
@@ -125,41 +132,34 @@ namespace HireHub.API.Tests.Services
         [Fact]
         public async Task LoginAsync_InvalidEmail_ReturnsNull()
         {
-           
             var dto = new LoginDto { Email = "no@a.com", Password = "pwd" };
             _userRepoMock.Setup(r => r.GetByEmailAsync(dto.Email)).ReturnsAsync((User?)null);
 
-            
             var result = await _service.LoginAsync(dto);
 
-           
             Assert.Null(result);
         }
 
         [Fact]
         public async Task LoginAsync_InvalidPassword_ReturnsNull()
         {
-           
             var dto = new LoginDto { Email = "a@b.com", Password = "wrong" };
             var user = new User { UserId = Guid.NewGuid(), Email = dto.Email, PasswordHash = BCrypt.Net.BCrypt.HashPassword("right") };
 
             _userRepoMock.Setup(r => r.GetByEmailAsync(dto.Email)).ReturnsAsync(user);
 
-           
             var result = await _service.LoginAsync(dto);
 
-           
             Assert.Null(result);
         }
 
         [Fact]
         public async Task LoginAsync_ValidCredentials_ReturnsAuthResponse()
-        { 
+        {
             var password = "myPass1!";
             var dto = new LoginDto { Email = "valid@a.com", Password = password };
             var user = new User { UserId = Guid.NewGuid(), Email = dto.Email, Role = "Employer", PasswordHash = BCrypt.Net.BCrypt.HashPassword(password) };
 
-            
             var jwtToken = new JwtSecurityToken(
                 expires: DateTime.UtcNow.AddHours(1),
                 claims: null);
@@ -168,7 +168,6 @@ namespace HireHub.API.Tests.Services
             _userRepoMock.Setup(r => r.GetByEmailAsync(dto.Email)).ReturnsAsync(user);
             _tokenServiceMock.Setup(t => t.CreateToken(user.UserId, user.Role, user.Email)).Returns(tokenString);
 
-          
             var result = await _service.LoginAsync(dto);
 
             Assert.NotNull(result);
@@ -177,11 +176,10 @@ namespace HireHub.API.Tests.Services
             Assert.Equal(tokenString, result.Token);
             Assert.True(result.ExpiresAt > DateTime.UtcNow);
         }
-     
+
         [Fact]
         public async Task UpdateAsync_UserExists_ReturnsUpdatedUserDto()
         {
-         
             var id = Guid.NewGuid();
             var dto = new UpdateUserDto
             {
@@ -197,14 +195,15 @@ namespace HireHub.API.Tests.Services
             var expectedDto = new UserDto { UserId = id, Email = "user@a.com", Address = dto.Address };
 
             _userRepoMock.Setup(r => r.GetByIdAsync(id)).ReturnsAsync(existingUser);
-            _mapperMock.Setup(m => m.Map(dto, existingUser));
+
+            // For mapper.Map(dto, existingUser) -> return the same existingUser instance (common Moq pattern)
+            _mapperMock.Setup(m => m.Map(dto, existingUser)).Returns(existingUser);
+
             _userRepoMock.Setup(r => r.UpdateAsync(existingUser)).ReturnsAsync(updatedUser);
             _mapperMock.Setup(m => m.Map<UserDto>(updatedUser)).Returns(expectedDto);
 
-         
             var result = await _service.UpdateAsync(id, dto);
 
-            
             Assert.NotNull(result);
             Assert.Equal(expectedDto.UserId, result.UserId);
             Assert.Equal(expectedDto.Address, result.Address);
@@ -225,22 +224,17 @@ namespace HireHub.API.Tests.Services
 
             _userRepoMock.Setup(r => r.GetByIdAsync(id)).ReturnsAsync((User?)null);
 
-         
             await Assert.ThrowsAsync<NotFoundException>(() => _service.UpdateAsync(id, dto));
         }
 
-      
         [Fact]
         public async Task DeleteAsync_UserExists_ReturnsTrue()
         {
-            
             var id = Guid.NewGuid();
             _userRepoMock.Setup(r => r.DeleteAsync(id)).ReturnsAsync(true);
 
-            
             var result = await _service.DeleteAsync(id);
 
-            
             Assert.True(result);
             _userRepoMock.Verify(r => r.DeleteAsync(id), Times.Once);
         }
@@ -248,13 +242,10 @@ namespace HireHub.API.Tests.Services
         [Fact]
         public async Task DeleteAsync_UserNotFound_ThrowsNotFoundException()
         {
-            
             var id = Guid.NewGuid();
             _userRepoMock.Setup(r => r.DeleteAsync(id)).ReturnsAsync(false);
 
-            
             await Assert.ThrowsAsync<NotFoundException>(() => _service.DeleteAsync(id));
         }
-
     }
 }

@@ -1,4 +1,3 @@
-
 using HireHub.API.Mappings;
 using HireHub.API.Middleware;
 using HireHub.API.Repositories.Implementations;
@@ -50,10 +49,9 @@ builder.Services.AddAuthentication(options =>
 
 builder.Services.AddAuthorization();
 
-
 builder.Services.AddAutoMapper(typeof(MappingProfile));
-
 builder.Services.AddControllers();
+
 builder.Services.AddApiVersioning(options =>
 {
     options.AssumeDefaultVersionWhenUnspecified = true;
@@ -71,8 +69,10 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 builder.Services.AddTransient<IConfigureOptions<SwaggerGenOptions>, ConfigureSwaggerOptions>();
 
+
 builder.Services.AddDbContext<HireHubContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("HireHub")));
+
 
 builder.Services.AddCors(options =>
 {
@@ -90,6 +90,7 @@ builder.Services.AddCors(options =>
     });
 });
 
+// Repositories & Services
 builder.Services.AddScoped<IUserRepository, UserRepository>();
 builder.Services.AddScoped<UserService>();
 
@@ -111,8 +112,15 @@ builder.Services.AddScoped<ApplicationService>();
 builder.Services.AddScoped<INotificationRepository, NotificationRepository>();
 builder.Services.AddScoped<NotificationService>();
 
+
 builder.Services.AddScoped<IEmailService, SmtpEmailService>();
+
+
 builder.Services.AddScoped<ITokenService, TokenService>();
+
+
+builder.Services.AddScoped<IPasswordResetRepository, PasswordResetRepository>();
+
 
 builder.Logging.ClearProviders();
 builder.Logging.AddLog4Net("log4net.config");

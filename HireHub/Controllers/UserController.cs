@@ -19,7 +19,7 @@ namespace HireHub.API.Controllers
             _userService = userService;
         }
 
-        
+     
         [HttpPost("register")]
         [AllowAnonymous]
         public async Task<IActionResult> Register([FromBody] CreateUserDto dto)
@@ -42,7 +42,45 @@ namespace HireHub.API.Controllers
             return Ok(auth);
         }
 
-       
+
+        public class ForgotPasswordDto
+        {
+            public string Email { get; set; } = "";
+            public string? OriginBaseUrl { get; set; } = null;
+        }
+
+        public class ResetPasswordDto
+        {
+            public string Token { get; set; } = "";
+            public string NewPassword { get; set; } = "";
+        }
+
+      
+        [HttpPost("forgot-password")]
+        [AllowAnonymous]
+        public async Task<IActionResult> ForgotPassword([FromBody] ForgotPasswordDto dto)
+        {
+            if (string.IsNullOrWhiteSpace(dto?.Email))
+                return BadRequest(new { message = "Email required" });
+
+            await _userService.RequestPasswordResetAsync(dto.Email, dto.OriginBaseUrl ?? $"{Request.Scheme}://{Request.Host.Value}");
+            return Ok(new { message = "If this email is registered, password reset instructions have been sent." });
+        }
+
+   
+        [HttpPost("reset-password")]
+        [AllowAnonymous]
+        public async Task<IActionResult> ResetPassword([FromBody] ResetPasswordDto dto)
+        {
+            if (string.IsNullOrWhiteSpace(dto?.Token) || string.IsNullOrWhiteSpace(dto?.NewPassword))
+                return BadRequest(new { message = "Token and new password required" });
+
+            var ok = await _userService.ResetPasswordWithTokenAsync(dto.Token, dto.NewPassword);
+            if (!ok) return BadRequest(new { message = "Invalid or expired token" });
+            return Ok(new { message = "Password updated" });
+        }
+
+      
         [Authorize(Roles = "Admin")]
         [HttpGet]
         public async Task<IActionResult> GetAll()
@@ -75,7 +113,6 @@ namespace HireHub.API.Controllers
             return Ok(users);
         }
 
-       
         [Authorize(Roles = "Admin,Employer,JobSeeker")]
         [HttpPut("{id:guid}")]
         public async Task<IActionResult> Update(Guid id, [FromBody] UpdateUserDto dto)
@@ -86,7 +123,7 @@ namespace HireHub.API.Controllers
             return Ok(updated);
         }
 
-       
+        
         [Authorize(Roles = "Admin,Employer,JobSeeker")]
         [HttpDelete("{id:guid}")]
         public async Task<IActionResult> Delete(Guid id)

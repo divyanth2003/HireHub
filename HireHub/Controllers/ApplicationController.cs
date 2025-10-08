@@ -91,7 +91,7 @@ namespace HireHub.API.Controllers
         }
 
 
-        [Authorize(Roles = "JobSeeker,Admin")]
+        [Authorize(Roles = "JobSeeker,Admin,Employer")]
         [HttpDelete("{id:int}")]
         public async Task<IActionResult> Delete(int id)
         {
