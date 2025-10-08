@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Security.Claims;
 using System.Threading.Tasks;
 using AutoMapper;
 using HireHub.API.Controllers;
@@ -7,6 +8,7 @@ using HireHub.API.DTOs;
 using HireHub.API.Models;
 using HireHub.API.Repositories.Interfaces;
 using HireHub.API.Services;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using Moq;
@@ -35,7 +37,7 @@ namespace HireHub.API.Tests.Controllers
             _passwordResetRepoMock = new Mock<IPasswordResetRepository>();
             _emailServiceMock = new Mock<IEmailService>();
 
-            // Important: pass all dependencies in the same order as UserService ctor
+            // construct service with all dependencies (match ctor order)
             _userService = new UserService(
                 _userRepoMock.Object,
                 _mapperMock.Object,
@@ -46,6 +48,24 @@ namespace HireHub.API.Tests.Controllers
             );
 
             _controller = new UserController(_userService);
+        }
+
+        // helper to set a ClaimsPrincipal on controller (admin or specific user)
+        private void SetControllerUser(Guid? userId = null, bool isAdmin = false)
+        {
+            var claims = new List<Claim>();
+            if (userId.HasValue)
+                claims.Add(new Claim(ClaimTypes.NameIdentifier, userId.Value.ToString()));
+            if (isAdmin)
+                claims.Add(new Claim(ClaimTypes.Role, "Admin"));
+
+            var identity = new ClaimsIdentity(claims, "test");
+            var principal = new ClaimsPrincipal(identity);
+
+            _controller.ControllerContext = new ControllerContext
+            {
+                HttpContext = new DefaultHttpContext { User = principal }
+            };
         }
 
         [Fact]
@@ -78,9 +98,7 @@ namespace HireHub.API.Tests.Controllers
                 Role = createdUser.Role
             };
 
-            // mapper should produce a new User instance that the service will populate (password hash, id, createdAt)
             _mapperMock.Setup(m => m.Map<User>(dto)).Returns(new User());
-
             _userRepoMock.Setup(r => r.ExistsByEmailAsync(dto.Email)).ReturnsAsync(false);
             _userRepoMock.Setup(r => r.AddAsync(It.IsAny<User>())).ReturnsAsync(createdUser);
             _mapperMock.Setup(m => m.Map<UserDto>(createdUser)).Returns(createdDto);
@@ -129,6 +147,49 @@ namespace HireHub.API.Tests.Controllers
             Assert.Equal(token, authResponse.Token);
             Assert.Equal(user.Role, authResponse.Role);
         }
+        [Fact]
+        public async Task ForgotPassword_ValidEmail_ReturnsOk()
+        {
+            var email = "me@example.com";
+            var dto = new UserController.ForgotPasswordDto { Email = email, OriginBaseUrl = "https://app.test" };
+
+            var user = new User { UserId = Guid.NewGuid(), Email = email, FullName = "Me" };
+            _userRepoMock.Setup(r => r.GetByEmailAsync(email)).ReturnsAsync(user);
+            _passwordResetRepoMock.Setup(p => p.AddAsync(It.IsAny<PasswordReset>())).ReturnsAsync(new PasswordReset());
+            _emailServiceMock.Setup(e => e.SendAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()))
+                             .ReturnsAsync(true);
+
+            var result = await _controller.ForgotPassword(dto);
+
+            var ok = Assert.IsType<OkObjectResult>(result);
+            Assert.NotNull(ok.Value);
+        }
+
+        [Fact]
+        public async Task ResetPassword_ValidToken_ReturnsOk()
+        {
+            var token = "rawtoken";
+            var dto = new UserController.ResetPasswordDto { Token = token, NewPassword = "NewP@ss1" };
+
+            // password reset flow handled in service; set repository to find a valid reset during service call
+            var reset = new PasswordReset
+            {
+                UserId = Guid.NewGuid(),
+                TokenHash = HireHub.API.Utils.TokenUtils.Sha256Hex(token),
+                ExpiresAt = DateTime.UtcNow.AddHours(1),
+                Used = false
+            };
+
+            _passwordResetRepoMock.Setup(p => p.GetByTokenHashAsync(It.IsAny<string>())).ReturnsAsync(reset);
+            _userRepoMock.Setup(u => u.GetByIdAsync(reset.UserId)).ReturnsAsync(new User { UserId = reset.UserId, Email = "a@b.com" });
+            _userRepoMock.Setup(u => u.UpdateAsync(It.IsAny<User>())).ReturnsAsync(new User { UserId = reset.UserId, Email = "a@b.com" });
+            _passwordResetRepoMock.Setup(p => p.MarkUsedAsync(It.IsAny<PasswordReset>())).Returns(Task.CompletedTask);
+
+            var result = await _controller.ResetPassword(dto);
+
+            var ok = Assert.IsType<OkObjectResult>(result);
+            Assert.NotNull(ok.Value);
+        }
 
         [Fact]
         public async Task GetAll_ReturnsOkResultWithUsers()
@@ -138,6 +199,9 @@ namespace HireHub.API.Tests.Controllers
 
             _userRepoMock.Setup(r => r.GetAllAsync()).ReturnsAsync(users);
             _mapperMock.Setup(m => m.Map<IEnumerable<UserDto>>(users)).Returns(userDtos);
+
+            // set admin claims because GetAll is [Authorize(Roles = "Admin")]
+            SetControllerUser(isAdmin: true);
 
             var result = await _controller.GetAll();
 
@@ -155,6 +219,9 @@ namespace HireHub.API.Tests.Controllers
 
             _userRepoMock.Setup(r => r.GetByIdAsync(id)).ReturnsAsync(user);
             _mapperMock.Setup(m => m.Map<UserDto>(user)).Returns(dto);
+
+            // user or admin allowed; set caller equal to requested user
+            SetControllerUser(userId: id);
 
             var result = await _controller.GetById(id);
 
@@ -181,12 +248,12 @@ namespace HireHub.API.Tests.Controllers
             var updatedDto = new UserDto { UserId = id, Email = "u@a.com", Address = "New Addr" };
 
             _userRepoMock.Setup(r => r.GetByIdAsync(id)).ReturnsAsync(existingUser);
-
-            // When AutoMapper maps into the existing user, return that same instance (common Moq pattern)
             _mapperMock.Setup(m => m.Map(dto, existingUser)).Returns(existingUser);
-
             _userRepoMock.Setup(r => r.UpdateAsync(existingUser)).ReturnsAsync(updatedUser);
             _mapperMock.Setup(m => m.Map<UserDto>(updatedUser)).Returns(updatedDto);
+
+            // caller = same user
+            SetControllerUser(userId: id);
 
             var result = await _controller.Update(id, dto);
 
@@ -196,14 +263,64 @@ namespace HireHub.API.Tests.Controllers
         }
 
         [Fact]
-        public async Task Delete_ExistingUser_ReturnsNoContent()
+        public async Task Delete_ExistingUser_ByOwner_ReturnsNoContent()
         {
             var id = Guid.NewGuid();
             _userRepoMock.Setup(r => r.DeleteAsync(id)).ReturnsAsync(true);
 
+            // caller is owner
+            SetControllerUser(userId: id);
+
             var result = await _controller.Delete(id);
 
             Assert.IsType<NoContentResult>(result);
+            _userRepoMock.Verify(r => r.DeleteAsync(id), Times.Once);
+        }
+
+        [Fact]
+        public async Task ScheduleDeletion_ByOwner_ReturnsOkMessage()
+        {
+            var id = Guid.NewGuid();
+            var user = new User { UserId = id, Email = "x@x.com" };
+            _userRepoMock.Setup(r => r.GetByIdAsync(id)).ReturnsAsync(user);
+            _userRepoMock.Setup(r => r.ScheduleDeletionAsync(id, It.IsAny<DateTime>())).Returns(Task.CompletedTask);
+
+            SetControllerUser(userId: id);
+
+            var result = await _controller.ScheduleDeletion(id, days: 7);
+
+            var ok = Assert.IsType<OkObjectResult>(result);
+            Assert.NotNull(ok.Value);
+            _userRepoMock.Verify(r => r.ScheduleDeletionAsync(id, It.IsAny<DateTime>()), Times.Once);
+        }
+
+        [Fact]
+        public async Task DeletePermanently_ByAdmin_ReturnsOk()
+        {
+            var id = Guid.NewGuid();
+            _userRepoMock.Setup(r => r.DeletePermanentlyAsync(id)).ReturnsAsync(true);
+
+            SetControllerUser(isAdmin: true);
+
+            var result = await _controller.DeletePermanently(id);
+
+            var ok = Assert.IsType<OkObjectResult>(result);
+            Assert.NotNull(ok.Value);
+            _userRepoMock.Verify(r => r.DeletePermanentlyAsync(id), Times.Once);
+        }
+
+        [Fact]
+        public async Task DeletePermanently_NotFound_ReturnsNotFound()
+        {
+            var id = Guid.NewGuid();
+            _userRepoMock.Setup(r => r.DeletePermanentlyAsync(id)).ReturnsAsync(false);
+
+            SetControllerUser(isAdmin: true);
+
+            var result = await _controller.DeletePermanently(id);
+
+            var nf = Assert.IsType<NotFoundObjectResult>(result);
+            Assert.NotNull(nf.Value);
         }
     }
 }

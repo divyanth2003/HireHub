@@ -3,14 +3,12 @@ using System.ComponentModel.DataAnnotations;
 
 namespace HireHub.API.DTOs
 {
-
     public class UserDto
     {
         public Guid UserId { get; set; }
 
         public string FullName { get; set; } = string.Empty;
 
-   
         public string Email { get; set; } = string.Empty;
 
         public string Role { get; set; } = string.Empty;
@@ -20,6 +18,10 @@ namespace HireHub.API.DTOs
         public string Gender { get; set; } = string.Empty;
 
         public string Address { get; set; } = string.Empty;
+
+        
+        public bool IsActive { get; set; } = true;
+        public DateTime? DeactivatedAt { get; set; } = null;
     }
 
 
@@ -28,11 +30,10 @@ namespace HireHub.API.DTOs
         [Required, MaxLength(50)]
         public string FullName { get; set; } = string.Empty;
 
-
         [Required, EmailAddress, MaxLength(150)]
         public string Email { get; set; } = string.Empty;
 
-        [Required, MinLength(6),MaxLength(20)]
+        [Required, MinLength(6), MaxLength(20)]
         public string Password { get; set; } = string.Empty;
 
         [Required]
@@ -49,7 +50,7 @@ namespace HireHub.API.DTOs
         public string Address { get; set; } = string.Empty;
     }
 
- 
+
     public class UpdateUserDto
     {
         [Required, MaxLength(50)]

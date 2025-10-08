@@ -2,6 +2,10 @@ using HireHub.API.Models;
 using HireHub.API.Repositories.Interfaces;
 using HireHub.Data;
 using Microsoft.EntityFrameworkCore;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
 
 namespace HireHub.API.Repositories.Implementations
 {
@@ -14,7 +18,6 @@ namespace HireHub.API.Repositories.Implementations
             _context = context;
         }
 
-    
         public async Task<User?> GetByEmailAsync(string email)
         {
             return await _context.Users
@@ -74,6 +77,7 @@ namespace HireHub.API.Repositories.Implementations
             return user;
         }
 
+
         public async Task<bool> DeleteAsync(Guid id)
         {
             var user = await _context.Users.FindAsync(id);
@@ -87,6 +91,33 @@ namespace HireHub.API.Repositories.Implementations
         public async Task<bool> ExistsByEmailAsync(string email)
         {
             return await _context.Users.AnyAsync(u => u.Email == email);
+        }
+
+      
+        public async Task ScheduleDeletionAsync(Guid userId, DateTime deletionAt)
+        {
+            var user = await _context.Users.FindAsync(userId);
+            if (user == null) throw new InvalidOperationException($"User {userId} not found.");
+
+            user.DeactivatedAt = deletionAt;
+            _context.Users.Update(user);
+            await _context.SaveChangesAsync();
+        }
+
+        public async Task DeactivateAsync(Guid userId)
+        {
+            var user = await _context.Users.FindAsync(userId);
+            if (user == null) throw new InvalidOperationException($"User {userId} not found.");
+
+            user.IsActive = false;
+            user.DeactivatedAt = DateTime.UtcNow;
+            _context.Users.Update(user);
+            await _context.SaveChangesAsync();
+        }
+
+        public async Task<bool> DeletePermanentlyAsync(Guid userId)
+        {
+            return await DeleteAsync(userId);
         }
     }
 }
