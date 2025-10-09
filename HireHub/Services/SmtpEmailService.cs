@@ -42,7 +42,12 @@ namespace HireHub.API.Services
                 var builder = new BodyBuilder
                 {
                     HtmlBody = body,
-                    TextBody = System.Text.RegularExpressions.Regex.Replace(body ?? string.Empty, "<.*?>", string.Empty)
+                    TextBody = System.Text.RegularExpressions.Regex.Replace(
+                                                                                body ?? string.Empty,
+                                                                                "<.*?>",
+                                                                                string.Empty,
+                                                                                 System.Text.RegularExpressions.RegexOptions.None,
+                                                                                 TimeSpan.FromSeconds(2))
                 };
 
                 msg.Body = builder.ToMessageBody();
