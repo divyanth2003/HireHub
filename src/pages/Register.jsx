@@ -70,33 +70,45 @@ export default function Register() {
     return dt.toISOString();
   };
 
-  const validate = () => {
-    const errors = {};
-    if (!form.fullName?.trim()) errors.fullName = "Full name is required";
-    if (!form.email?.trim()) errors.email = "Email is required";
-    else if (!isValidEmail(form.email)) errors.email = "Enter a valid email address";
-    if (!form.password) errors.password = "Password is required";
-    else if (form.password.length < 6) errors.password = "Password must be at least 6 characters";
-    if (!form.confirmPassword) errors.confirmPassword = "Please confirm password";
-    else if (form.confirmPassword !== form.password) errors.confirmPassword = "Passwords do not match";
-    if (!form.role) errors.role = "Select a role";
+const validate = () => {
+  const errors = {};
+  if (!form.fullName?.trim()) errors.fullName = "Full name is required";
+  if (!form.email?.trim()) errors.email = "Email is required";
+  else if (!isValidEmail(form.email)) errors.email = "Enter a valid email address";
+  if (!form.password) errors.password = "Password is required";
+  else if (form.password.length < 6) errors.password = "Password must be at least 6 characters";
+  if (!form.confirmPassword) errors.confirmPassword = "Please confirm password";
+  else if (form.confirmPassword !== form.password) errors.confirmPassword = "Passwords do not match";
+  if (!form.role) errors.role = "Select a role";
 
-    if (!form.dateOfBirth) {
-      errors.dateOfBirth = "Date of birth is required";
-    } else {
-      const selectedDate = new Date(form.dateOfBirth);
-      selectedDate.setHours(0, 0, 0, 0);
-      const today = new Date();
-      today.setHours(0, 0, 0, 0);
-      if (selectedDate >= today) {
-        errors.dateOfBirth = "Date of birth must be before today";
-      }
+  // --- DOB VALIDATION START ---
+  if (!form.dateOfBirth) {
+    errors.dateOfBirth = "Date of birth is required";
+  } else {
+    const dob = new Date(form.dateOfBirth);
+    const today = new Date();
+
+    // Calculate age
+    let age = today.getFullYear() - dob.getFullYear();
+    const monthDiff = today.getMonth() - dob.getMonth();
+    if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < dob.getDate())) {
+      age--;
     }
 
-    if (!form.gender) errors.gender = "Select gender";
-    if (!form.address?.trim()) errors.address = "Address is required";
-    return errors;
-  };
+    if (dob >= today) {
+      errors.dateOfBirth = "Date of birth must be before today";
+    } else if (age < 18) {
+      errors.dateOfBirth = "You must be at least 18 years old to register";
+    }
+  }
+  // --- DOB VALIDATION END ---
+
+  if (!form.gender) errors.gender = "Select gender";
+  if (!form.address?.trim()) errors.address = "Address is required";
+
+  return errors;
+};
+
 
   const focusFirstError = (errors) => {
     const first = Object.keys(errors)[0];

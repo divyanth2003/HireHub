@@ -7,7 +7,7 @@ import useAuth from "../auth/useAuth";
 import "../styles/jobapplications.css";
 
 export default function JobApplications() {
-  const { id } = useParams(); 
+  const { id } = useParams();
   const jobId = Number(id);
   const { user } = useAuth();
 
@@ -33,7 +33,6 @@ export default function JobApplications() {
 
   const resumeUrlCache = useRef({});
 
- 
   useEffect(() => {
     if (!jobId) return;
     setLoading(true);
@@ -53,7 +52,6 @@ export default function JobApplications() {
       })
       .finally(() => setLoading(false));
   }, [jobId]);
-
 
   useEffect(() => {
     return () => {
@@ -98,12 +96,9 @@ export default function JobApplications() {
   }, [apps, statusFilter, shortlistedOnly, dateFrom, dateTo]);
 
   const updateAppInState = (updated) => {
-    setApps((prev) =>
-      prev.map((a) => (a.applicationId === updated.applicationId ? updated : a))
-    );
+    setApps((prev) => prev.map((a) => (a.applicationId === updated.applicationId ? updated : a)));
   };
 
-  
   const toggleShortlist = async (app) => {
     try {
       const dto = {
@@ -118,7 +113,6 @@ export default function JobApplications() {
     }
   };
 
- 
   const openScheduleModal = (app) => {
     setSelectedApp(app);
     const iso = app.interviewDate || "";
@@ -126,9 +120,7 @@ export default function JobApplications() {
       const dt = new Date(iso);
       const pad = (n) => String(n).padStart(2, "0");
       setDatetimeLocal(
-        `${dt.getFullYear()}-${pad(dt.getMonth() + 1)}-${pad(dt.getDate())}T${pad(
-          dt.getHours()
-        )}:${pad(dt.getMinutes())}`
+        `${dt.getFullYear()}-${pad(dt.getMonth() + 1)}-${pad(dt.getDate())}T${pad(dt.getHours())}:${pad(dt.getMinutes())}`
       );
     } else setDatetimeLocal("");
     setShowScheduleModal(true);
@@ -139,7 +131,6 @@ export default function JobApplications() {
     setDatetimeLocal("");
   };
 
- 
   const saveSchedule = async () => {
     if (!selectedApp) return;
     if (!datetimeLocal) return alert("Please pick a date and time.");
@@ -223,31 +214,22 @@ export default function JobApplications() {
   };
 
   if (!user) return <div className="container mt-4">Login required</div>;
-  if (user.role !== "Employer")
-    return <div className="container mt-4">Only Employers can view this page</div>;
+  if (user.role !== "Employer") return <div className="container mt-4">Only Employers can view this page</div>;
 
   return (
     <div className="container mt-4 job-apps-page">
       <div className="page-header">
         <h3 className="mb-0">
-          Applications for{" "}
-          {jobTitle ? <span className="text-primary">“{jobTitle}”</span> : `Job #${jobId}`}
+          Applications for {jobTitle ? <span className="text-primary">“{jobTitle}”</span> : `Job #${jobId}`}
         </h3>
-        <div className="muted small">
-          Review applicants, schedule interviews and leave feedback.
-        </div>
+        <div className="muted small">Review applicants, schedule interviews and leave feedback.</div>
       </div>
 
- 
       <div className="filter-bar card p-2 mt-3">
         <div className="filter-row">
           <div className="filter-item">
             <label className="filter-label">Status</label>
-            <select
-              className="form-select"
-              value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value)}
-            >
+            <select className="form-select" value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)}>
               <option value="All">All</option>
               <option>Applied</option>
               <option>Shortlisted</option>
@@ -275,22 +257,12 @@ export default function JobApplications() {
 
           <div className="filter-item">
             <label className="filter-label">From</label>
-            <input
-              type="date"
-              className="form-control"
-              value={dateFrom}
-              onChange={(e) => setDateFrom(e.target.value)}
-            />
+            <input type="date" className="form-control" value={dateFrom} onChange={(e) => setDateFrom(e.target.value)} />
           </div>
 
           <div className="filter-item">
             <label className="filter-label">To</label>
-            <input
-              type="date"
-              className="form-control"
-              value={dateTo}
-              onChange={(e) => setDateTo(e.target.value)}
-            />
+            <input type="date" className="form-control" value={dateTo} onChange={(e) => setDateTo(e.target.value)} />
           </div>
 
           <div className="filter-item actions-right">
@@ -307,15 +279,12 @@ export default function JobApplications() {
               >
                 Reset
               </button>
-              <div className="small muted">
-                Showing {filteredApps.length} / {apps.length}
-              </div>
+              <div className="small muted">Showing {filteredApps.length} / {apps.length}</div>
             </div>
           </div>
         </div>
       </div>
 
- 
       {loading ? (
         <div className="loading mt-3">Loading applications…</div>
       ) : filteredApps.length === 0 ? (
@@ -323,81 +292,48 @@ export default function JobApplications() {
       ) : (
         <div className="applications-list mt-3">
           {filteredApps.map((a) => (
-            <div key={a.applicationId} className="app-card card">
-              <div className="app-row">
-                <div className="app-left">
-                  <div className="app-title">
-                    <span className="app-name">{a.jobSeekerName || "Candidate"}</span>
-                    <span className="resume-id muted">
-                      — Resume (
-                      <button
-                        className="btn btn-link p-0 small"
-                        style={{ textDecoration: "underline" }}
-                        onClick={() => handleView(a.resumeId)}
-                      >
-                        View
-                      </button>
-                      )
-                    </span>
-                  </div>
-
-                  <div className="app-sub muted">
-                    Applied {a.appliedAt ? new Date(a.appliedAt).toLocaleDateString() : "—"}
-                  </div>
-
-                  {a.employerFeedback && (
-                    <div className="app-feedback">Feedback: {a.employerFeedback}</div>
-                  )}
-
-                  {a.interviewDate && (
-                    <div className="app-interview">
-                      Interview: {new Date(a.interviewDate).toLocaleString()}
-                    </div>
-                  )}
+            <div key={a.applicationId} className="app-card card" data-role="app-card">
+              <div className="app-left">
+                <div className="app-title">
+                  <span className="app-name">{a.jobSeekerName || "Candidate"}</span>
+                  <span className="resume-id muted">
+                    — Resume (
+                    <button className="btn btn-link p-0 small" style={{ textDecoration: "underline" }} onClick={() => handleView(a.resumeId)}>
+                      View
+                    </button>
+                    )
+                  </span>
                 </div>
 
-                <div className="app-right">
-                  <div className="badges">
-                    <span className={`badge status ${a.status ? a.status.toLowerCase() : ""}`}>
-                      {a.status || "—"}
-                    </span>
-                  
-                    {a.isShortlisted && a.status !== "Shortlisted" && (
-                      <span className="badge shortlisted">Shortlisted</span>
-                    )}
-                  </div>
+                <div className="app-sub muted">Applied {a.appliedAt ? new Date(a.appliedAt).toLocaleDateString() : "—"}</div>
 
-                  <div className="actions">
-                    <button
-                      className={`btn btn-sm ${
-                        a.isShortlisted ? "btn-primary" : "btn-outline-primary"
-                      }`}
-                      onClick={() => toggleShortlist(a)}
-                    >
-                      {a.isShortlisted ? "Unshortlist" : "Shortlist"}
-                    </button>
+                {a.employerFeedback && <div className="app-feedback">Feedback: {a.employerFeedback}</div>}
 
-                    <button
-                      className="btn btn-sm btn-warning"
-                      onClick={() => openScheduleModal(a)}
-                    >
-                      {a.interviewDate ? "Reschedule" : "Schedule"}
-                    </button>
+                {a.interviewDate && <div className="app-interview">Interview: {new Date(a.interviewDate).toLocaleString()}</div>}
+              </div>
 
-                    <button
-                      className="btn btn-sm btn-secondary"
-                      onClick={() => openReviewModal(a)}
-                    >
-                      Review
-                    </button>
+              <div className="app-right">
+                <div className="badges">
+                  <span className={`badge status ${a.status ? a.status.toLowerCase() : ""}`}>{a.status || "—"}</span>
+                  {a.isShortlisted && a.status !== "Shortlisted" && <span className="badge shortlisted">Shortlisted</span>}
+                </div>
 
-                    <button
-                      className="btn btn-sm btn-danger"
-                      onClick={() => handleDelete(a)}
-                    >
-                      Delete
-                    </button>
-                  </div>
+                <div className="actions">
+                  <button className={`btn btn-sm ${a.isShortlisted ? "btn-primary" : "btn-outline-primary"}`} onClick={() => toggleShortlist(a)}>
+                    {a.isShortlisted ? "Unshortlist" : "Shortlist"}
+                  </button>
+
+                  <button className="btn btn-sm btn-warning" onClick={() => openScheduleModal(a)}>
+                    {a.interviewDate ? "Reschedule" : "Schedule"}
+                  </button>
+
+                  <button className="btn btn-sm btn-secondary" onClick={() => openReviewModal(a)}>
+                    Review
+                  </button>
+
+                  <button className="btn btn-sm btn-danger" onClick={() => handleDelete(a)}>
+                    Delete
+                  </button>
                 </div>
               </div>
             </div>
@@ -405,31 +341,17 @@ export default function JobApplications() {
         </div>
       )}
 
-   
       {showScheduleModal && (
         <div className="modal-backdrop">
           <div className="modal-card">
             <h5>Schedule Interview — {selectedApp?.jobSeekerName}</h5>
             <label className="form-label">Date & Time (Local)</label>
-            <input
-              type="datetime-local"
-              className="form-control"
-              value={datetimeLocal}
-              onChange={(e) => setDatetimeLocal(e.target.value)}
-            />
+            <input type="datetime-local" className="form-control" value={datetimeLocal} onChange={(e) => setDatetimeLocal(e.target.value)} />
             <div className="modal-actions">
-              <button
-                className="btn btn-outline-secondary"
-                onClick={closeScheduleModal}
-                disabled={modalSaving}
-              >
+              <button className="btn btn-outline-secondary" onClick={closeScheduleModal} disabled={modalSaving}>
                 Cancel
               </button>
-              <button
-                className="btn btn-primary"
-                onClick={saveSchedule}
-                disabled={modalSaving}
-              >
+              <button className="btn btn-primary" onClick={saveSchedule} disabled={modalSaving}>
                 {modalSaving ? "Saving…" : "Save"}
               </button>
             </div>
@@ -437,17 +359,12 @@ export default function JobApplications() {
         </div>
       )}
 
-    
       {showReviewModal && (
         <div className="modal-backdrop">
           <div className="modal-card">
             <h5>Review Application — {selectedApp?.jobSeekerName}</h5>
             <label className="form-label">Status</label>
-            <select
-              className="form-select"
-              value={reviewStatus}
-              onChange={(e) => setReviewStatus(e.target.value)}
-            >
+            <select className="form-select" value={reviewStatus} onChange={(e) => setReviewStatus(e.target.value)}>
               <option>Shortlisted</option>
               <option>Interview</option>
               <option>Hired</option>
@@ -455,26 +372,13 @@ export default function JobApplications() {
             </select>
 
             <label className="form-label mt-3">Feedback</label>
-            <textarea
-              className="form-control"
-              rows={4}
-              value={reviewFeedback}
-              onChange={(e) => setReviewFeedback(e.target.value)}
-            />
+            <textarea className="form-control" rows={4} value={reviewFeedback} onChange={(e) => setReviewFeedback(e.target.value)} />
 
             <div className="modal-actions">
-              <button
-                className="btn btn-outline-secondary"
-                onClick={closeReviewModal}
-                disabled={reviewSaving}
-              >
+              <button className="btn btn-outline-secondary" onClick={closeReviewModal} disabled={reviewSaving}>
                 Cancel
               </button>
-              <button
-                className="btn btn-primary"
-                onClick={saveReview}
-                disabled={reviewSaving}
-              >
+              <button className="btn btn-primary" onClick={saveReview} disabled={reviewSaving}>
                 {reviewSaving ? "Saving…" : "Save"}
               </button>
             </div>
