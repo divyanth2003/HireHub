@@ -1,0 +1,31 @@
+.status-badge {
+  display: inline-block;
+  padding: 6px 12px;
+  border-radius: 999px;
+  font-weight: 700;
+  font-size: 0.88rem;
+  border: 1px solid transparent;
+}
+
+.status-badge.open { background:#eef6ff; color:#dddfe3; border-color: rgba(11,94,215,0.08); }
+.status-badge.shortlisted { background:#e6fffa; color:#065f46; border-color: rgba(6,95,70,0.08); }
+.status-badge.interview { background:#fff7e6; color:#8a5a00; border-color: rgba(138,90,0,0.06); }
+.status-badge.hired { background:#e6fff3; color:#056a2b; border-color: rgba(5,106,43,0.06); }
+.status-badge.rejected { background:#fff0f0; color:#9b1f1f; border-color: rgba(155,31,31,0.06); }
+
+.inline-apply-panel {
+  border-top: 1px dashed rgba(0,0,0,0.06);
+  padding-top: 12px;
+}
+.inline-apply-panel .form-control {
+  min-height: 90px;
+}
+
+.applied-badge { font-weight:700; color: #0b5ed7; }
+
+.apply-card { padding: 16px; border-radius: 10px; }
+
+@media (max-width: 768px) {
+  .inline-apply-panel .form-control { min-height: 80px; }
+  .company-avatar { font-size: 20px; width: 56px; height:56px; line-height:56px; }
+}

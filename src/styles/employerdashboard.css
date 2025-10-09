@@ -1,0 +1,138 @@
+
+
+.employer-dashboard .page-title {
+  font-size: 1.6rem;
+  margin: 0 0 6px 0;
+  font-weight: 700;
+}
+
+.employer-dashboard .muted {
+  color: #6c757d;
+}
+
+
+.dashboard-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 18px;
+}
+
+
+.stat-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 14px;
+  margin-bottom: 20px;
+}
+
+.stat-card {
+  background: linear-gradient(180deg,#fff,#fcfeff);
+  border-radius: 10px;
+  border: 1px solid rgba(0,0,0,0.04);
+  padding: 18px;
+  box-shadow: 0 8px 20px rgba(18,37,63,0.03);
+  min-height: 90px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.stat-title {
+  font-size: 0.95rem;
+  color: #495057;
+  font-weight: 600;
+}
+
+.stat-value {
+  font-size: 1.5rem;
+  font-weight: 700;
+  margin: 8px 0;
+  color: #111;
+}
+
+.stat-sub {
+  font-size: 0.85rem;
+  color: #6c757d;
+}
+
+
+.recent-jobs {
+  margin-top: 18px;
+}
+
+.section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.section-title {
+  margin: 0;
+  font-size: 1.05rem;
+  font-weight: 700;
+}
+
+.section-actions .link-primary { color: #0d6efd; font-weight: 600; text-decoration: none;}
+.section-actions .link-muted { color: #6c757d; text-decoration: none; }
+
+
+.jobs-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.job-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  background: #fff;
+  border-radius: 8px;
+  padding: 12px 14px;
+  border: 1px solid rgba(0,0,0,0.04);
+}
+
+.job-title {
+  font-weight: 700;
+  color: #111;
+}
+
+.job-meta {
+  color: #6c757d;
+  margin-top: 4px;
+}
+
+.job-actions .btn {
+  padding: 6px 10px;
+  font-weight: 600;
+  border-radius: 8px;
+}
+
+
+.empty-card {
+  background: linear-gradient(180deg,#fff,#fcfeff);
+  border-radius: 10px;
+  border: 1px solid rgba(0,0,0,0.04);
+}
+
+
+.loading-block {
+  padding: 26px 14px;
+  color: #6c757d;
+}
+
+
+@media (max-width: 900px) {
+  .stat-grid { grid-template-columns: repeat(2, 1fr); }
+}
+
+@media (max-width: 640px) {
+  .stat-grid { grid-template-columns: 1fr; }
+  .dashboard-header { flex-direction: column; align-items: stretch; gap: 10px; }
+  .header-actions { display: flex; gap: 8px; justify-content: flex-end; }
+  .job-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+}
