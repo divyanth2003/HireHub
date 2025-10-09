@@ -1,0 +1,23 @@
+.employer-profile-page .profile-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 18px;
+}
+
+.employer-profile-page .profile-header h2 {
+  margin: 0;
+  font-size: 1.5rem;
+}
+
+.employer-profile-page .muted { color: #6c757d; }
+
+.employer-profile-page .stat { color: #333; }
+
+.employer-profile-page .card { border-radius: 8px; border: 1px solid rgba(0,0,0,0.06); }
+
+.employer-profile-page .form-actions { display: flex; gap: 8px; align-items: center; }
+
+@media (max-width: 576px) {
+  .employer-profile-page .profile-header { flex-direction: column; align-items: flex-start; }
+}

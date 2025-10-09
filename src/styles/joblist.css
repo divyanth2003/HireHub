@@ -1,0 +1,244 @@
+
+.jobs-list-page h3 {
+  font-weight: 700;
+  color: #111;
+}
+
+.search-area {
+  background: rgba(255, 255, 255, 0.75);
+  backdrop-filter: blur(10px);
+  border-radius: 14px;
+  padding: 20px;
+  box-shadow: 0 6px 30px rgba(18, 37, 63, 0.06);
+  border: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+.search-area .input-with-btn {
+  position: relative;
+  display: flex;
+  align-items: center;
+  flex: 1 1 auto;
+  gap: 8px;
+}
+
+.input-with-btn .icon-left {
+  position: absolute;
+  left: 12px;
+  color: #0d6efd;
+  font-size: 1rem;
+  opacity: 0.8;
+  pointer-events: none;
+}
+
+.input-with-btn input.form-control {
+  flex: 1;
+  border-radius: 10px;
+  padding: 10px 12px 10px 36px;
+  border: 1px solid rgba(0, 0, 0, 0.07);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
+  transition: all 0.2s ease;
+}
+.input-with-btn input.form-control:focus {
+  border-color: #0d6efd;
+  box-shadow: 0 0 0 3px rgba(13, 110, 253, 0.15);
+  outline: none;
+}
+
+.btn-outline-primary {
+  border-radius: 10px;
+  font-weight: 600;
+  transition: all 0.2s ease;
+}
+.btn-outline-primary:hover {
+  background: #0d6efd;
+  color: #fff;
+  box-shadow: 0 8px 20px rgba(13, 110, 253, 0.15);
+}
+.btn-outline-secondary {
+  border-radius: 10px;
+}
+
+.search-area .filter-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 12px;
+  border-radius: 999px;
+  background: linear-gradient(135deg, #eef6ff, #f5faff);
+  color: #0d6efd;
+  border: 1px solid rgba(13, 110, 253, 0.08);
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  margin: 4px 6px 4px 0;
+}
+.chip:hover {
+  background: #0d6efd;
+  color: #fff;
+  transform: translateY(-1px);
+}
+.chip .chip-x {
+  margin-left: 6px;
+  opacity: 0.8;
+  font-weight: 600;
+}
+
+.jobs-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.job-card {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 18px;
+  padding: 18px;
+  background: #fff;
+  border-radius: 12px;
+  border: 1px solid rgba(0, 0, 0, 0.05);
+  box-shadow: 0 8px 22px rgba(18, 37, 63, 0.03);
+  transition: all 0.2s ease;
+}
+.job-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 28px rgba(18, 37, 63, 0.06);
+}
+
+.job-card-left {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+.job-card-right {
+  width: 140px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+}
+
+.job-title-link {
+  font-weight: 700;
+  color: #0d6efd;
+  font-size: 1.1rem;
+  text-decoration: none;
+}
+.job-title-link:hover {
+  text-decoration: underline;
+}
+
+.job-meta {
+  color: #6c757d;
+  font-size: 0.92rem;
+  margin-top: 4px;
+}
+
+.job-desc-snippet {
+  margin-top: 8px;
+  color: #333;
+  font-size: 0.95rem;
+  line-height: 1.4;
+}
+
+.skill-line {
+  margin-top: 10px;
+}
+.skill-pill {
+  display: inline-block;
+  padding: 6px 12px;
+  border-radius: 999px;
+  background: #eef6ff;
+  color: #0d6efd;
+  border: 1px solid rgba(13, 110, 253, 0.08);
+  font-size: 0.85rem;
+  font-weight: 600;
+  margin-right: 6px;
+  margin-bottom: 4px;
+}
+
+.job-card .btn {
+  width: 100px;
+  border-radius: 8px;
+  font-weight: 600;
+}
+
+.jobs-skeleton .job-card-skel {
+  padding: 16px;
+  border-radius: 10px;
+  background: linear-gradient(90deg, #fff, #f8fbff);
+  margin-bottom: 12px;
+  box-shadow: 0 8px 20px rgba(3, 10, 30, 0.04);
+}
+.job-card-skel .s-title {
+  width: 50%;
+  height: 16px;
+  background: #eef2ff;
+  border-radius: 6px;
+  margin-bottom: 8px;
+}
+.job-card-skel .s-meta {
+  width: 30%;
+  height: 12px;
+  background: #f1f4ff;
+  border-radius: 6px;
+  margin-bottom: 12px;
+}
+.job-card-skel .s-desc {
+  width: 90%;
+  height: 10px;
+  background: #f8f9ff;
+  border-radius: 6px;
+}
+
+.pagination .page-link {
+  cursor: pointer;
+  border-radius: 8px;
+  margin: 0 2px;
+}
+.pagination .page-item.active .page-link {
+  background: #0d6efd;
+  border-color: #0d6efd;
+  color: #fff;
+}
+
+@media (max-width: 992px) {
+  .search-area {
+    padding: 16px;
+  }
+  .input-with-btn {
+    flex-direction: row;
+  }
+  .job-card {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .job-card-right {
+    width: 100%;
+    align-items: flex-start;
+    flex-direction: row;
+    justify-content: space-between;
+    margin-top: 10px;
+  }
+  .job-card .btn {
+    width: auto;
+    padding: 6px 12px;
+  }
+}
+
+@media (max-width: 576px) {
+  .search-area {
+    padding: 14px;
+  }
+  .input-with-btn input.form-control {
+    padding-left: 34px;
+  }
+  .job-title-link {
+    font-size: 1rem;
+  }
+}
