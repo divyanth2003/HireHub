@@ -1,228 +1,154 @@
-import React, { useEffect, useState, useMemo, useCallback } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import adminService from "../../services/adminService";
 import { toast } from "react-toastify";
 import "../../styles/admin.css";
+import { Link } from "react-router-dom";
 
-function useDebounce(value, ms = 400) {
-  const [deb, setDeb] = useState(value);
+function useAnimatedCount(value, duration = 700) {
+  const [count, setCount] = useState(0);
+  const startRef = useRef(null);
+
   useEffect(() => {
-    const t = setTimeout(() => setDeb(value), ms);
-    return () => clearTimeout(t);
-  }, [value, ms]);
-  return deb;
+    let start = performance.now();
+    const initial = Number(count);
+    const target = Number(value);
+
+    function step(now) {
+      if (!startRef.current) startRef.current = now;
+      const elapsed = now - startRef.current;
+      const progress = Math.min(elapsed / duration, 1);
+      const eased = 1 - Math.pow(1 - progress, 3); 
+      const current = Math.round(initial + (target - initial) * eased);
+      setCount(current);
+      if (progress < 1) requestAnimationFrame(step);
+      else startRef.current = null;
+    }
+
+    
+    if (target === 0) setCount(0);
+    requestAnimationFrame(step);
+
+    return () => {
+      startRef.current = null;
+    };
+ 
+  }, [value]);
+
+  return count;
 }
 
-export default function AdminApplications() {
-  const [applications, setApplications] = useState([]);
+export default function AdminDashboard() {
+  const [stats, setStats] = useState({ users: 0, jobs: 0, applications: 0 });
   const [loading, setLoading] = useState(true);
 
-  const [search, setSearch] = useState("");
-  const debouncedSearch = useDebounce(search, 400);
-
-  const [jobFilter, setJobFilter] = useState("all");
-  const [statusFilter, setStatusFilter] = useState("all");
-
-  const [page, setPage] = useState(1);
-  const pageSize = 8;
-
-  const loadApplications = useCallback(async (q = "") => {
-    setLoading(true);
-    try {
-      const data = await adminService.getApplications(q);
-      setApplications(Array.isArray(data) ? data : []);
-      setPage(1);
-    } catch (err) {
-      console.error(err);
-      toast.error("Failed to load applications");
-    } finally {
-      setLoading(false);
+  useEffect(() => {
+    let mounted = true;
+    async function load() {
+      try {
+        const data = await adminService.getStats();
+        if (!mounted) return;
+        setStats({
+          users: data?.totalUsers ?? data?.users ?? 0,
+          jobs: data?.totalJobs ?? data?.jobs ?? 0,
+          applications:
+            data?.totalApplications ?? data?.applications ?? 0
+        });
+      } catch (err) {
+        toast.error("Failed to load stats");
+      } finally {
+        if (mounted) setLoading(false);
+      }
     }
+    load();
+    return () => (mounted = false);
   }, []);
 
-  useEffect(() => {
-    loadApplications(debouncedSearch);
-  }, [debouncedSearch, loadApplications]);
+  const usersCount = useAnimatedCount(stats.users);
+  const jobsCount = useAnimatedCount(stats.jobs);
+  const appsCount = useAnimatedCount(stats.applications);
 
-  const handleDelete = async (id) => {
-    if (!window.confirm("Delete this application?")) return;
-    try {
-      await adminService.deleteApplication(id);
-      toast.success("Application deleted");
-      await loadApplications(debouncedSearch);
-    } catch (err) {
-      console.error(err);
-      toast.error("Delete failed");
-    }
-  };
-
-  const normalizeApplicantName = (a) => {
-    if (!a) return "—";
-    if (typeof a.applicantName === "string" && a.applicantName.trim()) return a.applicantName;
-    if (typeof a.jobSeekerName === "string" && a.jobSeekerName.trim()) return a.jobSeekerName;
-    if (a.jobSeeker) {
-      if (a.jobSeeker.fullName) return a.jobSeeker.fullName;
-      if (a.jobSeeker.user && a.jobSeeker.user.fullName) return a.jobSeeker.user.fullName;
-    }
-    if (a.jobSeekerFullName) return a.jobSeekerFullName;
-    if (a.applicant && typeof a.applicant === "object") {
-      if (a.applicant.fullName) return a.applicant.fullName;
-      if (a.applicant.name) return a.applicant.name;
-    }
-    return "—";
-  };
-
-  const jobs = useMemo(() => {
-    const s = new Set();
-    applications.forEach(a => {
-      const jt = a.jobTitle || (a.job && (a.job.title || a.job.jobTitle)) || "";
-      if (jt) s.add(jt);
-    });
-    return ["all", ...Array.from(s).sort()];
-  }, [applications]);
-
-  const statuses = useMemo(() => {
-    const s = new Set();
-    applications.forEach(a => {
-      const st = a.status || "";
-      if (st) s.add(st);
-    });
-    return ["all", ...Array.from(s).sort()];
-  }, [applications]);
-
-  const filtered = useMemo(() => {
-    const q = (debouncedSearch || "").toString().toLowerCase().trim();
-    return applications.filter(a => {
-      const applicantStr = (a.applicantName || a.jobSeekerName || (a.jobSeeker && (a.jobSeeker.fullName || "")) || "").toString().toLowerCase();
-      const jobStr = (a.jobTitle || (a.job && (a.job.title || "")) || "").toString().toLowerCase();
-      const idStr = String(a.applicationId || a.id || "").toLowerCase();
-      const matchesQuery = !q || applicantStr.includes(q) || jobStr.includes(q) || idStr.includes(q);
-      const matchesJob = jobFilter === "all" || (a.jobTitle || (a.job && (a.job.title || "")) || "") === jobFilter;
-      const matchesStatus = statusFilter === "all" || (a.status || "") === statusFilter;
-      return matchesQuery && matchesJob && matchesStatus;
-    });
-  }, [applications, debouncedSearch, jobFilter, statusFilter]);
-
-  const total = filtered.length;
-  const totalPages = Math.max(1, Math.ceil(total / pageSize));
-  const pageItems = useMemo(() => {
-    const start = (page - 1) * pageSize;
-    return filtered.slice(start, start + pageSize);
-  }, [filtered, page]);
+  if (loading)
+    return (
+      <div className="container mt-4">
+        <div className="loading-dot" aria-hidden />
+        <div className="sr-only">Loading stats…</div>
+      </div>
+    );
 
   return (
-    <div className="admin-applications admin-dashboard">
+    <div className="container mt-4 admin-dashboard">
       <div className="dash-header">
-        <div className="title-col">
-          <h3 style={{ margin: 0 }}>Manage Applications</h3>
-          <div className="muted" style={{ marginTop: 6 }}>Review and manage job applications</div>
-        </div>
+        <h1>Admin Dashboard</h1>
+        <p className="muted">Overview of platform activity</p>
+      </div>
 
-        {/* Filters on right, compact and responsive */}
-        <div className="filters-col">
-          <div className="filters-row filters-compact">
-            <div className="search-wrap">
-              <input
-                type="text"
-                className="form-control input-search compact"
-                placeholder="Search by applicant, job or id..."
-                value={search}
-                onChange={(e) => { setSearch(e.target.value); setPage(1); }}
-              />
+      <div className="stats-grid" role="list">
+        <article className="stat-card stat-users" role="listitem" aria-label="Total users">
+          <div className="card-top">
+            <div className="icon" aria-hidden>
+              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                <circle cx="12" cy="7" r="4" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
             </div>
-
-            <select
-              className="form-select compact"
-              value={jobFilter}
-              onChange={(e) => { setJobFilter(e.target.value); setPage(1); }}
-            >
-              {jobs.map(j => <option key={j} value={j}>{j === "all" ? "All jobs" : j}</option>)}
-            </select>
-
-            <select
-              className="form-select compact"
-              value={statusFilter}
-              onChange={(e) => { setStatusFilter(e.target.value); setPage(1); }}
-            >
-              {statuses.map(s => <option key={s} value={s}>{s === "all" ? "All status" : s}</option>)}
-            </select>
+            <small className="label">Total Users</small>
           </div>
-        </div>
+
+          <div className="card-body">
+            <div className="big-number">{usersCount}</div>
+            <div className="meta">Active users on the platform</div>
+          </div>
+
+          <div className="card-footer">
+            <Link to="/admin/users" className="btn-link">View users →</Link>
+          </div>
+        </article>
+
+        <article className="stat-card stat-jobs" role="listitem" aria-label="Total jobs">
+          <div className="card-top">
+            <div className="icon" aria-hidden>
+              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                <rect x="2" y="7" width="20" height="14" rx="2" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                <path d="M16 3v4M8 3v4M3 11h18" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
+            </div>
+            <small className="label">Total Jobs</small>
+          </div>
+
+          <div className="card-body">
+            <div className="big-number">{jobsCount}</div>
+            <div className="meta">Positions posted by employers</div>
+          </div>
+
+          <div className="card-footer">
+            <Link to="/admin/jobs" className="btn-link">View jobs →</Link>
+          </div>
+        </article>
+
+        <article className="stat-card stat-apps" role="listitem" aria-label="Total applications">
+          <div className="card-top">
+            <div className="icon" aria-hidden>
+              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                <polyline points="7 10 12 15 17 10" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                <line x1="12" y1="15" x2="12" y2="3" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
+            </div>
+            <small className="label">Total Applications</small>
+          </div>
+
+          <div className="card-body">
+            <div className="big-number">{appsCount}</div>
+            <div className="meta">Total job applications submitted</div>
+          </div>
+
+          <div className="card-footer">
+            <Link to="/admin/applications" className="btn-link">View applications →</Link>
+          </div>
+        </article>
       </div>
 
-      <div className="card card-surface">
-        <div className="card-body">
-          {loading ? (
-            <div className="table-placeholder">Loading applications…</div>
-          ) : (
-            <>
-              <div className="table-responsive">
-                <table className="table modern-table">
-                  <thead>
-                    <tr>
-                      <th style={{ width: 90 }}>ID</th>
-                      <th>Applicant</th>
-                      <th>Job</th>
-                      <th>Applied On</th>
-                      <th style={{ width: 120 }}>Status</th>
-                      <th style={{ width: 100 }} className="text-end">Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {pageItems.length === 0 ? (
-                      <tr>
-                        <td colSpan={6} className="text-center text-muted">No applications found</td>
-                      </tr>
-                    ) : pageItems.map(a => {
-                      const applicant = normalizeApplicantName(a);
-                      return (
-                        <tr key={a.applicationId ?? a.id}>
-                          <td className="mono-col">{a.applicationId ?? a.id}</td>
-                          <td>
-                            <div style={{ fontWeight: 600 }}>{applicant}</div>
-                          </td>
-                          <td>{a.jobTitle || (a.job && (a.job.title || "—")) || "—"}</td>
-                          <td>{a.appliedAt ? new Date(a.appliedAt).toLocaleString() : "—"}</td>
-                          <td>
-                            <span className={`badge ${
-                              a.status?.toLowerCase() === "shortlisted"
-                                ? "bg-success"
-                                : a.status?.toLowerCase() === "interview"
-                                  ? "bg-info"
-                                  : "bg-secondary"}`}>
-                              {a.status ?? "—"}
-                            </span>
-                          </td>
-                          <td className="text-end">
-                            <button
-                              className="btn btn-sm btn-danger"
-                              onClick={() => handleDelete(a.applicationId ?? a.id)}
-                            >
-                              Delete
-                            </button>
-                          </td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
-              </div>
-
-              <div className="table-footer">
-                <div className="footer-left muted">
-                  Showing <strong>{total === 0 ? 0 : (page - 1) * pageSize + 1}</strong> - <strong>{(page - 1) * pageSize + pageItems.length}</strong> of <strong>{total}</strong>
-                </div>
-                <div className="pagination">
-                  <button className="btn-p small" onClick={() => setPage(1)} disabled={page === 1}>«</button>
-                  <button className="btn-p small" onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page === 1}>‹</button>
-                  <span className="page-indicator">{page} / {totalPages}</span>
-                  <button className="btn-p small" onClick={() => setPage(p => Math.min(totalPages, p + 1))} disabled={page === totalPages}>›</button>
-                  <button className="btn-p small" onClick={() => setPage(totalPages)} disabled={page === totalPages}>»</button>
-                </div>
-              </div>
-            </>
-          )}
-        </div>
-      </div>
+     
     </div>
   );
 }

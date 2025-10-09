@@ -28,7 +28,6 @@
   font-size: 0.95rem;
 }
 
-
 .stats-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
@@ -80,11 +79,9 @@
   color: rgba(255,255,255,0.95);
 }
 
-
 .stat-users { background: var(--accent-blue); color: #fff; }
 .stat-jobs { background: var(--accent-green); color: #fff; }
 .stat-apps { background: var(--accent-gold); color: #333; }
-
 
 .card-body {
   margin-top: 0.6rem;
@@ -143,7 +140,6 @@
   box-shadow: none;
 }
 
-
 .loading-dot {
   width: 44px;
   height: 8px;
@@ -158,7 +154,6 @@
   100% { transform: translateX(-12px); opacity: .6; }
 }
 
-
 .sr-only {
   position: absolute;
   left: -9999px;
@@ -167,8 +162,6 @@
   top: auto;
   overflow: hidden;
 }
-
-
 
 .admin-users .card-surface {
   background: #fff;
@@ -194,7 +187,6 @@
 .btn-search { padding:0.47rem 0.8rem; }
 .btn-outline { padding:0.48rem 0.7rem; background:transparent; border:1px solid #e3e7ec; color:#374151; border-radius:8px; }
 
-
 .table-responsive { overflow:auto; }
 .modern-table { width:100%; border-collapse:collapse; font-size:0.95rem; }
 .modern-table thead th {
@@ -211,12 +203,10 @@
 }
 .modern-table tbody tr:hover { background: rgba(11, 116, 255, 0.02); }
 
-
 .mono-col { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, "Roboto Mono", monospace; color:#111827; display:flex; align-items:center; gap:0.5rem; }
 .id-trunc { color: rgba(17,24,39,0.9); font-size:0.88rem; }
 .btn-icon { background:transparent; border:0; padding:4px; display:inline-grid; place-items:center; cursor:pointer; color:#6b7280; border-radius:6px; }
 .btn-icon:hover { background: rgba(11,116,255,0.06); color: #0b74ff; }
-
 
 .badge { padding: 0.28rem 0.55rem; border-radius: 999px; font-weight:600; font-size:0.78rem; display:inline-block; }
 .role { text-transform:capitalize; color:#fff; }
@@ -226,7 +216,6 @@
 .status.bg-success { background:#16a34a; color:#fff; }
 .status.bg-danger { background:#dc2626; color:#fff; }
 
-
 .btn-ghost { background:transparent; border:1px solid #e6eefc; color:#0b63d1; padding:0.4rem 0.6rem; border-radius:8px; }
 .btn { border-radius:8px; padding:0.45rem 0.65rem; font-weight:600; }
 .btn-sm { padding:0.35rem 0.5rem; font-size:0.86rem; border-radius:7px; }
@@ -234,14 +223,12 @@
 .btn-success { background:#10b981; color:#fff; border:0; }
 .btn-danger { background:#ef4444; color:#fff; border:0; }
 
-
 .table-footer { display:flex; justify-content:space-between; align-items:center; padding:0.85rem 1rem; gap:1rem; }
 .footer-left { font-size:0.92rem; color:#6b7280; }
 .pagination { display:flex; align-items:center; gap:0.5rem; }
 .btn-p { border: 1px solid #e6eefc; background: #fff; padding:0.35rem 0.5rem; border-radius:6px; cursor:pointer; }
 .btn-p[disabled] { opacity:0.5; cursor:default; }
 .page-indicator { font-weight:600; color:#374151; padding:0 0.4rem; }
-
 
 @media (max-width: 860px) {
   .search-form { flex-wrap:wrap; gap:0.4rem; }
@@ -258,7 +245,6 @@
 .admin-user-details .detail-header .muted { color: #6b7280; margin-top:4px; }
 
 .card.card-surface { border-radius:12px; box-shadow:0 10px 30px rgba(15,30,50,0.06); }
-
 
 .modal-backdrop {
   position:fixed;
@@ -292,10 +278,10 @@
   .form-grid { grid-template-columns: 1fr; }
   .modal-panel { max-width: 94vw; }
 }
+
 /* Admin Jobs filter & styling */
 .admin-jobs .dash-header { display:flex; justify-content:space-between; align-items:center; gap:1rem; }
 .admin-jobs .filters-row { display:flex; gap:0.6rem; align-items:center; }
-
 
 .admin-jobs .form-select {
   border-radius: 8px;
@@ -322,9 +308,7 @@
 
 .admin-jobs .card { border-radius:12px; box-shadow:0 10px 30px rgba(15,30,50,0.06); }
 .admin-jobs .modern-table thead th { color:#374151; font-weight:700; }
-
 .admin-jobs .modern-table tbody tr:hover { background: rgba(11,116,255,0.02); }
-
 
 @media (max-width: 920px) {
   .admin-jobs .filters-row { flex-wrap:wrap; }
